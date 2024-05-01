@@ -20,8 +20,6 @@ Then install starCAT via the Python Package Index.
 pip install starcatpy
 ```
 
-Although not 
-
 ## Tutorial
 Please see our tutorials in [python](https://github.com/immunogenomics/starCAT/blob/main/Examples/starCAT_vingette.ipynb) and [R](https://github.com/immunogenomics/starCAT/blob/main/Examples/starCAT_vingette_R.ipynb). A sample pipeline using a pre-built reference programs (TCAT.V1) is shown below. 
 

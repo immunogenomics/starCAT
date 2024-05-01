@@ -95,7 +95,7 @@ class starCAT(cNMF):
         
         """
 
-        ref_list_fn = os.path.join(self._classpath, 'current_references.tsv')
+        ref_list_fn = os.path.join(self._classpath, '../../current_references.tsv')
         ref_list = pd.read_csv(ref_list_fn, index_col = 0, sep = '\t', skiprows = 1)
         available_refs = ref_list['Name'].values
 

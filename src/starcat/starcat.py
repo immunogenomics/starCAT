@@ -224,7 +224,7 @@ class starCAT(cNMF):
         
         Parameters:
         ----------
-        counts_fn : str, path to input counts matrix (ex. *.h5ad, *.mtx.gz, *.txt)
+        counts_fn : str, path to input counts matrix (ex. *.h5ad, *.mtx.gz). If neither, assumes tab-delimited text file
         
         """
         if counts_fn.endswith('.h5ad'):
@@ -296,7 +296,7 @@ class starCAT(cNMF):
         overlap_genes = sorted(set(self.ref.columns).intersection(set(query.var.index)))
         print('%d out of %d genes in the reference overlap with the query' % (len(overlap_genes), self.ref.shape[1]))
         self.overlap_genes = overlap_genes
-        query = query[:, self.overlap_genes]
+        query = query[:, self.overlap_genes].copy()
 
         sc.pp.scale(query, zero_center=False)
         return query

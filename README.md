@@ -2,7 +2,25 @@
 Implements *CellAnnotator (aka *CAT/starCAT), annotating scRNA-Seq with predefined gene expression programs
 
 ## Citation
-If you use *CAT, please cite our preprint.
+If you use *CAT, please cite our [preprint]().
+
+## Installation
+To install starCAT, first create a conda environment with necessary dependencies.
+```bash
+conda create -n cnmf_env --yes --channel bioconda --channel conda-forge --channel defaults python=3.7 fastcluster matplotlib numpy palettable pandas scipy 'scikit-learn>=1.0' pyyaml 'scanpy>=1.8' && conda clean --yes --all # Create environment, cnmf_env, containing required packages
+conda activate cnmf_env # Activate cnmf_env - necessary before running cnmf
+pip install cnmf # install the actual cnmf package
+    
+## Only needed to load the example notebook in jupyterlab but not needed for non-interactive runs ## 
+conda install --yes jupyterlab && conda clean --yes --all
+```
+
+Then install starCAT via the Python Package Index.
+```bash
+pip install starcatpy
+```
+
+Although not 
 
 ## Tutorial
 Please see our tutorials in [python](https://github.com/immunogenomics/starCAT/blob/main/Examples/starCAT_vingette.ipynb) and [R](https://github.com/immunogenomics/starCAT/blob/main/Examples/starCAT_vingette_R.ipynb). A sample pipeline using a pre-built reference programs (TCAT.V1) is shown below. 

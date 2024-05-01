@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from cnmf import cNMF, load_df_from_npz
+from cnmf import cNMF
 import scanpy as sc
 import os
 import scipy.sparse as sp
@@ -45,6 +45,12 @@ def is_nonnegative_matrix(matrix):
     
     # Check each element if it's an integer or a float equivalent to an integer
     return np.all(data >= 0)
+
+
+def load_df_from_npz(filename):
+    with np.load(filename, allow_pickle=True) as f:
+        obj = pd.DataFrame(**f)
+    return obj
 
 
 class starCAT(cNMF):  

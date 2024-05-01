@@ -1,11 +1,11 @@
 # starCAT
-Implements *CellAnnotator (aka *CAT), annotating scRNA-Seq with predefined gene expression programs.
+Implements *CellAnnotator (aka *CAT/starCAT), annotating scRNA-Seq with predefined gene expression programs
 
 ## Citation
 If you use *CAT, please cite our preprint.
 
 ## Tutorial
-Please see our tutorials in [python](https://github.com/immunogenomics/starCAT/blob/main/Examples/starCAT_vingette.ipynb) and [R](https://github.com/immunogenomics/starCAT/blob/main/Examples/starCAT_vingette_R.ipynb). Briefly, a sample pipeline using a pre-built reference programs (TCAT.V1) is shown below. 
+Please see our tutorials in [python](https://github.com/immunogenomics/starCAT/blob/main/Examples/starCAT_vingette.ipynb) and [R](https://github.com/immunogenomics/starCAT/blob/main/Examples/starCAT_vingette_R.ipynb). A sample pipeline using a pre-built reference programs (TCAT.V1) is shown below. 
 
 ```python
 # Load default TCAT reference from starCAT databse
@@ -42,3 +42,14 @@ scores.iloc[0:2, :]
 
 
 ```
+
+
+starCAT also can be run in the command line.
+```bash
+starCAT.py --reference "TCAT.V1" --counts {counts_fn} --output-dir {output_dir} --name {outuput_name}
+```
+* --reference - name of a default reference to download (ex. TCAT.V1) OR filepath containing a reference set of GEPs by genes (*.tsv/.csv/.txt), default is 'TCAT.V1'
+* --counts - filepath to input (cell x gene) counts matrix as a matrix market (.mtx.gz), tab delimited text file, or anndata file (.h5ad)
+* --scores - optional path to yaml file for calculating score add-ons, not necessary for pre-built references
+* --output-dir - the output directory. all output will be placed in {output-dir}/{name}...'. default directory is '.'
+* --name - the output analysis prefix name, default is 'starCAT'

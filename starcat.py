@@ -385,9 +385,11 @@ class starCAT(cNMF):
         """
         # self.usage.to_csv(os.path.join(output_dir, name+'.rf_usage.txt'), sep='\t')
         self.usage_norm.to_csv(os.path.join(output_dir, name+'.rf_usage_normalized.txt'), sep='\t')
+        print('Saving usages to %s' % os.path.join(output_dir, name+'.rf_usage_normalized.txt'))
         
         if not self.scores is None:
             self.scores.to_csv(os.path.join(output_dir, name+'.scores.txt'), sep='\t')
+            print('Saving scores to %s' % os.path.join(output_dir, name+'.scores.txt'))
 
 
 def main():

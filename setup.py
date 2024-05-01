@@ -4,7 +4,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="starCAT",
+    name="starcatpy",
     version="1.0",
     author="Dylan Kotliar, Michelle Curtis",
     author_email="dylkot@gmail.com, curtism@broadinstitute.org",
@@ -24,7 +24,7 @@ setuptools.setup(
     packages=setuptools.find_packages(where="src"),
     entry_points={
         'console_scripts': [
-            'starCAT = starCAT:main',
+            'starcat = starcat:main',
         ],
     },
     install_requires=[

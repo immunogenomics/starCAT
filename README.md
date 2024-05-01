@@ -62,7 +62,7 @@ scores.iloc[0:2, :]
 
 starCAT also can be run in the command line.
 ```bash
-starCAT.py --reference "TCAT.V1" --counts {counts_fn} --output-dir {output_dir} --name {outuput_name}
+starcat --reference "TCAT.V1" --counts {counts_fn} --output-dir {output_dir} --name {outuput_name}
 ```
 * --reference - name of a default reference to download (ex. TCAT.V1) OR filepath containing a reference set of GEPs by genes (*.tsv/.csv/.txt), default is 'TCAT.V1'
 * --counts - filepath to input (cell x gene) counts matrix as a matrix market (.mtx.gz), tab delimited text file, or anndata file (.h5ad)

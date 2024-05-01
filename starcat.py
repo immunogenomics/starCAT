@@ -224,7 +224,7 @@ class starCAT(cNMF):
         
         Parameters:
         ----------
-        counts_fn : str, path to input counts matrix (ex. *.h5ad, *.mtx.gz, *.txt)
+        counts_fn : str, path to input counts matrix (ex. *.h5ad, *.mtx.gz). If neither, assumes tab-delimited text file
         
         """
         if counts_fn.endswith('.h5ad'):

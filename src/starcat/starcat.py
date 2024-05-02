@@ -11,6 +11,7 @@ import requests
 import tarfile
 import warnings
 
+reference_url = 'https://raw.githubusercontent.com/immunogenomics/starCAT/main/current_references.tsv'
 _nmf_kwargs = dict(
                    beta_loss='frobenius',
                    solver='mu',
@@ -53,6 +54,24 @@ def load_df_from_npz(filename):
     return obj
 
 
+def load_table_url(url, **kwargs):
+    '''
+    Load URL from web.
+    
+    Additional key word arguments are passed to pandas.read_csv
+    '''
+    response = requests.get(url)
+
+    # Ensure the request was successful
+    if response.status_code == 200:
+        # Use pandas to read the tab-delimited file
+        from io import StringIO
+        data = pd.read_csv(StringIO(response.text), sep='\t', **kwargs)
+        return(data)
+    else:
+        raise Exception('Failed to load url: %s' % url)
+
+
 class starCAT(cNMF):  
     def __init__(self, reference = 'TCAT.V1', score_path = None, cachedir='./cache'):
         """
@@ -67,7 +86,6 @@ class starCAT(cNMF):
         """
         
         self._nmf_kwargs = _nmf_kwargs
-        self._classpath = os.path.dirname(os.path.realpath(__file__))
         self._cache = cachedir
         self.ref_name = reference
         self.usage = None
@@ -101,8 +119,11 @@ class starCAT(cNMF):
         
         """
 
-        ref_list_fn = os.path.join(self._classpath, '../../current_references.tsv')
-        ref_list = pd.read_csv(ref_list_fn, index_col = 0, sep = '\t', skiprows = 1)
+        try:
+            ref_list = load_table_url(reference_url, comment='#')
+        except:
+            raise Exception('Failed to load reference database URL file. Make sure you are connected to the internet')
+
         available_refs = ref_list['Name'].values
 
         if self.ref_name not in available_refs:

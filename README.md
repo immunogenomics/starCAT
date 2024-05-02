@@ -11,7 +11,7 @@ You can install starCAT and its dependencies via the Python Package Index.
 pip install starcatpy
 ```
 
-We have tested it with scikit-learn 1.0.3 and Scanpy 1.8 and python 3.7. You need to have the jupyter or jupyterlab packages installed to run the tutorials.
+We have tested it with scikit-learn 1.0.3, Scanpy 1.8, and python 3.7. You need the jupyter or jupyterlab packages to access the tutorial notebooks.
 
 
 ## Tutorial

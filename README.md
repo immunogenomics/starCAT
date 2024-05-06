@@ -2,7 +2,7 @@
 Implements *CellAnnotator (aka *CAT/starCAT), annotating scRNA-Seq with predefined gene expression programs
 
 ## Citation
-If you use *CAT, please cite our [preprint]().
+If you use *CAT, please cite our [preprint](https://doi.org/10.1101/2024.05.03.592310).
 
 ## Installation
 

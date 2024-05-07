@@ -285,8 +285,7 @@ class starCAT(cNMF):
 
         """
 
-        query = self.prepare_query(query)
-            
+        query = self.prepare_query(query)        
         self.usage = self.fit_query_usage(query)
         self.usage_norm = self.usage.div(self.usage.sum(axis=1), axis=0)
         
@@ -324,8 +323,12 @@ class starCAT(cNMF):
         print('%d out of %d genes in the reference overlap with the query' % (len(overlap_genes), self.ref.shape[1]))
         self.overlap_genes = overlap_genes
         query = query[:, self.overlap_genes].copy()
-
         sc.pp.scale(query, zero_center=False)
+
+        # In python 3.10, scale casts query as float64. Here just ensure its same dtype as reference
+        if query.X.dtype != self.ref.values.dtype:
+            query.X = query.X.astype(self.ref.values.dtype)
+        
         return query
          
         

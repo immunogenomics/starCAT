@@ -15,7 +15,7 @@ We have tested it with scikit-learn 1.0.3, Scanpy 1.8, and python 3.7. You need 
 
 
 ## Tutorial
-Please see our tutorials in [python](starCAT/Examples/starCAT_vignette.ipynb) and [R](Examples/starCAT_vingette_R.ipynb). A sample pipeline using a pre-built reference programs (TCAT.V1) is shown below. 
+Please see our tutorials in [python](Examples/starCAT_vignette.ipynb) and [R](Examples/starCAT_vingette_R.ipynb). A sample pipeline using a pre-built reference programs (TCAT.V1) is shown below. 
 
 ```python
 # Load default TCAT reference from starCAT databse

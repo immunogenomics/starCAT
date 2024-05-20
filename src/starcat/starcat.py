@@ -182,69 +182,6 @@ class starCAT(cNMF):
                 tar.extractall(self._cache)
 
     
-    def build_reference(self, ref_dir, ref_name, k, density_threshold, out_fn = None):
-        """"
-        Builds a reference using a default cNMF output directory and name. Requires running "consensus" step 
-        in cNMF. By default, outputs reference within the same directory, unless a new filepath is specified.
-        Then initializes *CAT object with spectra.
-
-        Parameters
-        ----------
-        ref_dir : str, path to cNMF directory (output-dir in cNMF)
-
-        ref_name : str, analysis name in cNMF (output-dir/name/name* in cNMF)
-
-        k : int, number of programs used for cNMF consensus
-
-        density_threshold : float, threshold used for filtering outlier spectra in cNMF consensus
-
-        out_fn : str, path name to output reference spectra 
-                (default="ref-dir/ref-name/ref-name.starCAT_reference.txt")
-        """
-
-        if os.path.isdir(os.path.join(ref_dir, ref_name)):
-            cobj = cNMF(output_dir = ref_dir, name=ref_name)
-        else:
-            raise Exception(
-                "{dir_name} is not a directory. Please provide a valid output-directory path"
-                "and analysis name used in cNMF.".format(
-                    dir_name=os.path.join(ref_dir, ref_name))
-            )
-
-        density_threshold_repl = str(density_threshold).replace('.', '_')
-        tpmfn = cobj.paths['gene_spectra_tpm__txt'] % (k, density_threshold_repl)
-
-        gene_tpm = pd.read_csv(tpmfn, index_col = 0, sep = '\t')
-        hvgs = open(cobj.paths['nmf_genes_list']).read().split('\n')
-        stds = load_df_from_npz(cobj.paths['tpm_stats'])
-        stds.columns = ['mean', 'std']
-        stds.index = gene_tpm.columns
-
-        # Renormalize TPM spectra to sum to 1e6
-        gene_tpm_renorm = gene_tpm.copy()
-        gene_tpm_renorm = gene_tpm_renorm.div(gene_tpm_renorm.sum(axis=1), axis=0)*1e6
-
-        # Var-norm TPM spectra
-        gene_tpm_varnorm = gene_tpm_renorm.div(stds['std'])
-
-        # Filter to highly variable genes
-        ref_spectra = gene_tpm_varnorm[hvgs].copy()
-        ref_spectra.index = 'GEP' + ref_spectra.index.astype('str')
-
-        if out_fn == None:
-            out_fn = os.path.join(ref_dir, ref_name, '%s.starCAT_reference.k_%d.dt_%s.tsv' % 
-                                  (ref_name, k, density_threshold_repl))
-
-        print('Saving reference spectra to %s' % out_fn)
-        ref_spectra.to_csv(out_fn, sep='\t')
-         
-        self.score_path = None
-        self.score_data = self.load_scores(self.score_path)
-        self.ref_name = out_fn
-        print("Using user specified reference spectra file {f}".format(f=out_fn))
-        self.ref = pd.read_csv(out_fn, index_col = 0, sep = '\t').astype(np.float32)
-
-    
     def load_counts(self, counts_fn):
         """
         Loads counts matrix (cells X genes) from 10X outputs, tab delimited text file, or anndata file.
@@ -436,10 +373,6 @@ def main():
     parser.add_argument('--output-dir', type=str, help='Output directory. All output will be placed in [output-dir]/[name]...', nargs='?', default='.')
     parser.add_argument('--name', type=str, help='Name for analysis. All output will be placed in [output-dir]/[name]...', nargs='?', default='starCAT')    
     parser.add_argument('-s', '--scores', type=str, help='Optional path to yaml file for calculating score add-ons. Not necessary for pre-built references', default=None)
-    # parser.add_argument('--cnmf-dir', type=str, help='[build_reference], Path to cNMF directory (output-dir in cNMF)', default=None)
-    # parser.add_argument('--cnmf-name', type=str, help='[build_reference], Analysis name in cNMF (output-dir/name/name* in cNMF)', default=None)
-    # parser.add_argument('-k', '--components', dest='k', type=int, help='[build_reference], Number of components (k) used in matrix factorization with cNMF', default=None)
-    # parser.add_argument('--local-density-threshold', dest='dt', type=float, help='[build_reference], Threshold for the local density filtering used in cNMF consensus', default=None)
 
         
     args = parser.parse_args()

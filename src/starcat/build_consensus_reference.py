@@ -109,30 +109,22 @@ class BuildConsensusReference(cNMF):
         intersect_genes_all = sorted(set.intersection(*all_genes))
 
         # Renormalize and variance-normalize TPM spectra for all cNMF objects
-        merged_data = {}
+        # Renormalize and variance-normalize TPM spectra for all cNMF objects
+        merged_data = {'TPM_Renorm_VarNorm':[], 'Scores':[] }
 
         for n in range(self.num_results):
             spectra_scores = self.spectra_score_all[n]
             spectra_renorm = self.spectra_tpm_all[n][intersect_genes_all].copy()
             spectra_renorm = spectra_renorm.div(spectra_renorm.sum(axis=1), axis=0)*1e6
             spectra_varnorm = spectra_renorm.div(self.stds_all[n][spectra_renorm.columns])
+            new_genes = sorted(set(all_genes) - set(spectra_scores.columns))
+            spectra_scores[new_genes] = np.nan
 
-            if n==0:
-                merged_data['TPM_Renorm_VarNorm'] = spectra_varnorm
-                merged_data['Scores'] = spectra_scores
-            else:
-                merged_data['TPM_Renorm_VarNorm'] = pd.concat(
-                            [merged_data['TPM_Renorm_VarNorm'].loc[:,intersect_genes_all],
-                             spectra_varnorm.loc[:, intersect_genes_all]], axis=0)
+            merged_data['TPM_Renorm_VarNorm'].append(spectra_varnorm)
+            merged_data['Scores'] = spectra_scores
 
-                union_genes = sorted(set(merged_data['Scores'].columns).union(spectra_scores.columns)) 
-                new_genes = sorted(set(union_genes) - set(merged_data['Scores'].columns))
-                merged_data['Scores'][new_genes] = np.nan                
-                new_genes = sorted(set(union_genes) - set(spectra_scores.columns))
-                spectra_scores[new_genes] = np.nan
-                merged_data['Scores'] = pd.concat(
-                            [merged_data['Scores'].loc[:,union_genes],
-                             spectra_scores.loc[:, union_genes]], axis=0)        
+        merged_data['TPM_Renorm_VarNorm'] = pd.concat([x[intersect_genes_all] for x in merged_data['TPM_Renorm_VarNorm']], axis=0)
+        merged_data['Scores'] = pd.concat([x for x in merged_data['Scores']], axis=0)      
 
         # Define pairwise correlations for all GEPs
         self.correlate_geps()

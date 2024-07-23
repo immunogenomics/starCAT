@@ -19,6 +19,25 @@ def load_df_from_npz(filename):
     return obj
 
 
+def df_col_corr(X, Y):
+    '''
+    Compute pairwise Pearson correlation matrix of columns of X and Y. Returns
+    R which is n_X_cols X n_Y_cols
+    '''
+
+    if X.isnull().any().any() or Y.isnull().any().any():
+        raise Exception("NaNs found in spectra matrix which efficient pearson correlation does not support")
+
+    X_norm = X.subtract(X.mean(axis=0), axis=1)
+    X_norm= X_norm.divide(X_norm.std(axis=0), axis=1)
+    Y_norm = Y.subtract(Y.mean(axis=0), axis=1)
+    Y_norm= Y_norm.divide(Y_norm.std(axis=0), axis=1)
+    R = np.dot(X_norm.T, Y_norm) / (X.shape[0]-1)
+    
+    R = pd.DataFrame(R, index=X.columns, columns=Y.columns)
+    return(R)
+
+
 class BuildConsensusReference(cNMF):  
     def __init__(self, cnmf_paths, output_dir='.', prefix = '', ks = None, density_thresholds = None,
                  tpm_fns = None, score_fns = None, order_thresh = None, corr_thresh = 0.5, pct_thresh = 0.666):
@@ -181,34 +200,28 @@ class BuildConsensusReference(cNMF):
         """
         # Calculate all pairwise GEP correlations
         geps = [gep for spectra_tpm in self.spectra_tpm_all for gep in spectra_tpm.index]
-        R = pd.DataFrame(0, index = geps, columns = geps)
+        R = pd.DataFrame(np.nan, index = geps, columns = geps)
 
         for i in range(0, len(self.spectra_tpm_all)):
-            for j in range(0, len(self.spectra_tpm_all)):
-                if j >= i:
+            for j in range(i, len(self.spectra_tpm_all)):
+                # Renormalize each pair of cNMF results using intersecting genes
+                overlap_all = list(set(self.spectra_tpm_all[i].columns).intersection(self.spectra_tpm_all[j].columns))
 
-                    # Renormalize each pair of cNMF results using intersecting genes
-                    overlap_all = list(set(self.spectra_tpm_all[i].columns).intersection(self.spectra_tpm_all[j].columns))
+                renorm1 = self.spectra_tpm_all[i][overlap_all].div(
+                            self.spectra_tpm_all[i][overlap_all].sum(axis=1), axis=0)*1e6
+                renorm2 = self.spectra_tpm_all[j][overlap_all].div(
+                            self.spectra_tpm_all[j][overlap_all].sum(axis=1), axis=0)*1e6
 
-                    res1_renorm = self.spectra_tpm_all[i][overlap_all].div(
-                                self.spectra_tpm_all[i][overlap_all].sum(axis=1), axis=0)*1e6
-                    res2_renorm = self.spectra_tpm_all[j][overlap_all].div(
-                                self.spectra_tpm_all[j][overlap_all].sum(axis=1), axis=0)*1e6
 
-                    res1_varnorm = res1_renorm[overlap_all].div(self.stds_all[i][overlap_all])
-                    res2_varnorm = res2_renorm[overlap_all].div(self.stds_all[j][overlap_all])
-
-                    # Pairwise GEP correlations between union HVGs of cNMF result pair
-                    for gep1 in res1_varnorm.index:
-                        for gep2 in res2_varnorm.index:
-                            overlap = sorted(set(self.hvgs_all[i]).union(self.hvgs_all[j]).intersection(
-                                        res1_varnorm.columns).intersection(res2_varnorm.columns))
-
-                            (r,p) = pearsonr(res1_varnorm.loc[gep1, overlap], res2_varnorm.loc[gep2, overlap])
-                            R.loc[gep1, gep2] = r
-                            R.loc[gep2, gep1] = r
-                            
-        self.R = R        
+                overlap = sorted((set(self.hvgs_all[i]).union(self.hvgs_all[j])).intersection(overlap_all))
+        
+                renorm1 = renorm1[overlap].div(self.stds_all[i][overlap])
+                renorm2 = renorm2[overlap].div(self.stds_all[j][overlap])
+                res = df_col_corr(renorm1.T, renorm2.T)
+                R.loc[res.index, res.columns] = res
+                R.loc[res.columns, res.index] = res.T
+        
+        self.R = R
 
 
     def cluster_geps(self):

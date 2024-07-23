@@ -179,9 +179,9 @@ class BuildConsensusReference(cNMF):
         clus_df.loc[filtsingle_index, :].to_csv(os.path.join(self.output_dir, 
                                     '%sstarcat_consensus_clustering.filtered.txt' % self.prefix), '\t')
         spectra_tpm_grouped.to_csv(os.path.join(self.output_dir, 
-                                    '%sstarcat_consensus_spectra_tpm.txt' % self.prefix), '\t')
+                                    '%sstarcat_consensus_spectra_normalized.txt' % self.prefix), '\t')
         spectra_tpm_grouped.loc[filtsingle_index, :].to_csv(os.path.join(self.output_dir, 
-                                    '%sstarcat_consensus_spectra_tpm.filtered.txt' % self.prefix), '\t')
+                                    '%sstarcat_consensus_spectra_normalized.filtered.txt' % self.prefix), '\t')
         spectra_scores_grouped.to_csv(os.path.join(self.output_dir, 
                                     '%sstarcat_consensus_spectra_score.txt' % self.prefix), '\t')
         spectra_scores_grouped.loc[filtsingle_index, :].to_csv(os.path.join(self.output_dir, 

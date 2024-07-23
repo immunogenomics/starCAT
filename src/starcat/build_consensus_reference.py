@@ -20,14 +20,15 @@ def load_df_from_npz(filename):
 
 
 class BuildConsensusReference(cNMF):  
-    def __init__(self, cnmf_objs, output_dir='.', prefix = '', ks = None, density_thresholds = None,
+    def __init__(self, cnmf_paths, output_dir='.', prefix = '', ks = None, density_thresholds = None,
                  tpm_fns = None, score_fns = None, order_thresh = None, corr_thresh = 0.5, pct_thresh = 0.666):
         """
         Class for building consensus gene expression programs (GEPs) from 2 or more cNMF results.
         
         Parameters
         ----------
-        cnmf_objs: list, list of cNMF objects to use for clustering
+        cnmf_objs: list, paths to cNMF project directories for clustering. Should include the cNMF name
+            at the end of the path, I.e. [cnmf_output_dir]/[cnmf_name]
 
         output_dir : path, optional (default=".") output directory for spectra results
 
@@ -51,6 +52,14 @@ class BuildConsensusReference(cNMF):
         """
         
         # Load filepaths from cnmf object
+        cnmf_objs = []
+        for path in cnmf_paths:
+            if not os.path.exists(path):
+                raise Exception("Input path %s does not exist" % path)
+
+            npath = os.path.normpath(path)
+            cnmf_objs.append(cNMF(output_dir=os.path.dirname(npath), name=os.path.basename(npath)))
+
         if (any([ks, density_thresholds])) & (not any([tpm_fns, score_fns])):
             tpm_fns = []
             score_fns = []
@@ -107,7 +116,9 @@ class BuildConsensusReference(cNMF):
 
         all_genes = list(set(spectra_tpm.columns) for spectra_tpm in self.spectra_tpm_all)
         intersect_genes_all = sorted(set.intersection(*all_genes))
+        union_genes_all = sorted(set.intersection(*all_genes))
 
+        
         # Renormalize and variance-normalize TPM spectra for all cNMF objects
         # Renormalize and variance-normalize TPM spectra for all cNMF objects
         merged_data = {'TPM_Renorm_VarNorm':[], 'Scores':[] }
@@ -117,14 +128,15 @@ class BuildConsensusReference(cNMF):
             spectra_renorm = self.spectra_tpm_all[n][intersect_genes_all].copy()
             spectra_renorm = spectra_renorm.div(spectra_renorm.sum(axis=1), axis=0)*1e6
             spectra_varnorm = spectra_renorm.div(self.stds_all[n][spectra_renorm.columns])
-            new_genes = sorted(set(all_genes) - set(spectra_scores.columns))
+            new_genes = sorted(set(union_genes_all) - set(spectra_scores.columns))
             spectra_scores[new_genes] = np.nan
+            spectra_scores = spectra_scores[union_genes_all]
 
             merged_data['TPM_Renorm_VarNorm'].append(spectra_varnorm)
-            merged_data['Scores'] = spectra_scores
+            merged_data['Scores'].append(spectra_scores)
 
-        merged_data['TPM_Renorm_VarNorm'] = pd.concat([x[intersect_genes_all] for x in merged_data['TPM_Renorm_VarNorm']], axis=0)
-        merged_data['Scores'] = pd.concat([x for x in merged_data['Scores']], axis=0)      
+        merged_data['TPM_Renorm_VarNorm'] = pd.concat([x[intersect_genes_all] for x in merged_data['TPM_Renorm_VarNorm']], axis=0)        
+        merged_data['Scores'] = pd.concat(merged_data['Scores'], axis=0)      
 
         # Define pairwise correlations for all GEPs
         self.correlate_geps()
@@ -196,7 +208,7 @@ class BuildConsensusReference(cNMF):
                             R.loc[gep1, gep2] = r
                             R.loc[gep2, gep1] = r
                             
-        self.R = R
+        self.R = R        
 
 
     def cluster_geps(self):

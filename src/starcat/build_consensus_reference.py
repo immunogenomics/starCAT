@@ -72,13 +72,16 @@ class BuildConsensusReference(cNMF):
         
         # Load filepaths from cnmf object
         cnmf_objs = []
+        self.dataset_names = []
         for path in cnmf_paths:
             if not os.path.exists(path):
                 raise Exception("Input path %s does not exist" % path)
 
             npath = os.path.normpath(path)
-            cnmf_objs.append(cNMF(output_dir=os.path.dirname(npath), name=os.path.basename(npath)))
-
+            name = os.path.basename(npath)
+            cnmf_objs.append(cNMF(output_dir=os.path.dirname(npath), name=name))
+            self.dataset_names.append(name)
+            
         if (any([ks, density_thresholds])) & (not any([tpm_fns, score_fns])):
             tpm_fns = []
             score_fns = []
@@ -113,9 +116,9 @@ class BuildConsensusReference(cNMF):
             stds = tpm_stats['__std']
             spectra_tpm = pd.read_csv(tpm_fn, index_col = 0, sep = '\t')
             spectra_tpm = spectra_tpm.loc[:, ~spectra_tpm.columns.str.contains('AB_|prot')]
-            spectra_tpm.index = 'cNMFResult%i:' % (n+1) + spectra_tpm.index.astype(str)
+            spectra_tpm.index = '%s:' % (self.dataset_names[n]) + spectra_tpm.index.astype(str)
             spectra_score = pd.read_csv(score_fn, index_col = 0, sep = '\t')
-            spectra_score.index = 'cNMFResult%i:' % (n+1) + spectra_score.index.astype(str)
+            spectra_score.index = '%s:' % (self.dataset_names[n]) + spectra_score.index.astype(str)
             hvgs = open(cnmf_obj.paths['nmf_genes_list']).read().split('\n')
             
             self.spectra_tpm_all += [spectra_tpm]
@@ -186,7 +189,8 @@ class BuildConsensusReference(cNMF):
         open(os.path.join(self.output_dir, '%sstarcat_overdispersed_genes_union.txt' % self.prefix), 
              'w').write('\n'.join(hvgs_union))
 
-        return(clus_df, spectra_tpm_grouped, spectra_scores_grouped, hvgs_union)
+        top_genes = self.get_top_genes(clus_df, spectra_scores_grouped, n_top_genes=30)
+        return(clus_df, spectra_tpm_grouped, spectra_scores_grouped, hvgs_union, top_genes)
     
 
     def correlate_geps(self):
@@ -195,8 +199,6 @@ class BuildConsensusReference(cNMF):
 
         Parameters
         ----------
-
-
         """
         # Calculate all pairwise GEP correlations
         geps = [gep for spectra_tpm in self.spectra_tpm_all for gep in spectra_tpm.index]
@@ -230,8 +232,6 @@ class BuildConsensusReference(cNMF):
 
         Parameters
         ----------    
-
-
 
         """
 
@@ -354,3 +354,48 @@ class BuildConsensusReference(cNMF):
             sys.exit(-1)
 
         return(gep_clusters)
+
+
+    def get_top_genes(self, clus_df, cgep_spectra, n_top_genes=30):
+        '''
+        Output the top genes for GEPs that got merged into a cGEP and for the cGEP itself
+
+        Parameters
+        ----------    
+        clus_df: DataFrame, GEP clustering matrix output by cluster_cnmf_results
+
+        cgep_spectra: DataFrame, cGEP spectra scores matrix output by cluster_cnmf_results
+
+        n_top_genes: int, number of top genes to show
+
+        Returns
+        ----------  
+        top_genes_percgep_dict: dict, {cGEP name : DataFrame of top genes}
+        '''
+        
+        # Get the top genes for each GEP from each dataset separately
+        topgenes_perds = {}
+        for i,d in enumerate(clus_df.columns):
+            topgenes_perds[d] = {}
+            top_genes = []
+            spectra_scores = self.spectra_score_all[i].T
+            
+            for gep in spectra_scores.columns:
+                top_genes.append(list(spectra_scores.sort_values(by=gep, ascending=False).index[:n_top_genes]))
+
+            topgenes_perds[d] = pd.DataFrame(top_genes, index=spectra_scores.columns, columns=np.arange(1, n_top_genes+1)).T
+
+        # For each cGEP get the top genes from the contributing dataset and the final spectra
+        top_genes_percgep_dict = {}
+        for cgep in clus_df.index:
+            sub_geps = clus_df.loc[cgep, :].dropna()
+            top_genes = pd.DataFrame(index=np.arange(1, n_top_genes+1), columns=sub_geps.index)
+    
+            # Get top genes for each clustered dataset
+            for dataset in sub_geps.index:
+                top_genes[dataset] = topgenes_perds[dataset][sub_geps.at[dataset]]
+
+            top_genes['cGEP'] = cgep_spectra.loc[cgep, :].sort_values(ascending=False).index[:n_top_genes]
+            top_genes_percgep_dict[cgep] = top_genes
+
+        return(top_genes_percgep_dict)

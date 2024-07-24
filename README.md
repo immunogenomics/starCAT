@@ -1,5 +1,7 @@
 ## starCAT <img src="https://drive.google.com/uc?export=view&id=1W1in9vldkKdNe6ncwsHD6L6MSvfcKV6M" width="165px" align="right" />
+
 Implements *CellAnnotator (aka *CAT/starCAT), annotating scRNA-Seq with predefined gene expression programs
+
 
 ## Citation
 If you use *CAT, please cite our [preprint](https://doi.org/10.1101/2024.05.03.592310).

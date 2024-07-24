@@ -170,7 +170,8 @@ class BuildConsensusReference(cNMF):
         spectra_tpm_grouped.index = 'cGEP' + spectra_tpm_grouped.index.astype(str)
         spectra_scores_grouped = merged_data['Scores'].groupby(clus_list).mean()
         spectra_scores_grouped.index = 'cGEP' + spectra_scores_grouped.index.astype(str)
-        hvgs_union = sorted(set.union(*list(set(hvgs) for hvgs in self.hvgs_all)))
+        hvgs_union = sorted(set.union(*list(set(hvgs) for hvgs in self.hvgs_all)).intersection(spectra_tpm_grouped))
+        spectra_tpm_grouped_hvg = spectra_tpm_grouped[hvgs_union]
 
         # Filter singletons and save results
         filtsingle_index = clus_df[np.sum(-clus_df.isna(), axis = 1)>1].index
@@ -178,10 +179,16 @@ class BuildConsensusReference(cNMF):
                                     '%sstarcat_consensus_clustering.txt' % self.prefix), '\t')
         clus_df.loc[filtsingle_index, :].to_csv(os.path.join(self.output_dir, 
                                     '%sstarcat_consensus_clustering.filtered.txt' % self.prefix), '\t')
-        spectra_tpm_grouped.to_csv(os.path.join(self.output_dir, 
+        spectra_tpm_grouped_hvg.to_csv(os.path.join(self.output_dir, 
                                     '%sstarcat_consensus_spectra_normalized.txt' % self.prefix), '\t')
-        spectra_tpm_grouped.loc[filtsingle_index, :].to_csv(os.path.join(self.output_dir, 
+        spectra_tpm_grouped_hvg.loc[filtsingle_index, :].to_csv(os.path.join(self.output_dir, 
                                     '%sstarcat_consensus_spectra_normalized.filtered.txt' % self.prefix), '\t')
+        
+        spectra_tpm_grouped.to_csv(os.path.join(self.output_dir, 
+                                    '%sstarcat_consensus_spectra_normalized_allgenes.txt' % self.prefix), '\t')
+        spectra_tpm_grouped.loc[filtsingle_index, :].to_csv(os.path.join(self.output_dir, 
+                                    '%sstarcat_consensus_spectra_normalized_allgenes.filtered.txt' % self.prefix), '\t')        
+        
         spectra_scores_grouped.to_csv(os.path.join(self.output_dir, 
                                     '%sstarcat_consensus_spectra_score.txt' % self.prefix), '\t')
         spectra_scores_grouped.loc[filtsingle_index, :].to_csv(os.path.join(self.output_dir, 
@@ -190,7 +197,7 @@ class BuildConsensusReference(cNMF):
              'w').write('\n'.join(hvgs_union))
 
         top_genes = self.get_top_genes(clus_df, spectra_scores_grouped, n_top_genes=30)
-        return(clus_df, spectra_tpm_grouped, spectra_scores_grouped, hvgs_union, top_genes)
+        return(clus_df, spectra_tpm_grouped_hvg, spectra_scores_grouped, hvgs_union, top_genes)
     
 
     def correlate_geps(self):

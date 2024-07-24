@@ -1,4 +1,4 @@
-# starCAT
+# starCAT <img src="https://drive.google.com/uc?export=view&id=1W1in9vldkKdNe6ncwsHD6L6MSvfcKV6M" width="165px" align="right" />
 Implements *CellAnnotator (aka *CAT/starCAT), annotating scRNA-Seq with predefined gene expression programs
 
 ## Citation
@@ -14,7 +14,7 @@ pip install starcatpy
 We have tested it with scikit-learn 1.0.3, Scanpy 1.8, and python 3.7. You need the jupyter or jupyterlab packages to access the tutorial notebooks. In addition, building the UMAP in the tutorial requires python 3.8+
 
 
-## Tutorial
+## Basic starCAT usage
 Please see our tutorials in [python](Examples/starCAT_vignette.ipynb) and [R](Examples/starCAT_vignette_R.ipynb). A sample pipeline using a pre-built reference programs (TCAT.V1) is shown below. 
 
 ```python
@@ -63,3 +63,9 @@ starcat --reference "TCAT.V1" --counts {counts_fn} --output-dir {output_dir} --n
 * --scores - optional path to yaml file for calculating score add-ons, not necessary for pre-built references
 * --output-dir - the output directory. all output will be placed in {output-dir}/{name}...'. default directory is '.'
 * --name - the output analysis prefix name, default is 'starCAT'
+
+## Creating your own reference
+
+We provide example scripts for constructing custom starCAT references from [a single cNMF run](./Examples/build_reference_vignette.ipynb) or [multiple cNMF runs](./Examples/build_multidataset_reference_vignette.ipynb). 
+
+__Please let us know if you are interested in making your reference publically available for others to use analogous to our TCAT.V1 reference. You can email me at dkotliar@broadinstitute.org__

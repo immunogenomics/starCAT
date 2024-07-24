@@ -1,9 +1,10 @@
 # starCAT <img src="https://drive.google.com/uc?export=view&id=1W1in9vldkKdNe6ncwsHD6L6MSvfcKV6M" width="165px" align="right" />
 Implements *CellAnnotator (aka *CAT/starCAT), annotating scRNA-Seq with predefined gene expression programs
 
-If you use *CAT, please cite our preprint: [Kotliar*, Curtis*, et al. Reproducible single cell annotation of programs underlying T-cell subsets, activation states, and functions.](https://doi.org/10.1101/2024.05.03.592310)
+## Citation
+If you use *CAT, please cite our [preprint](https://doi.org/10.1101/2024.05.03.592310).
 
-## Installation 
+## Installation
 
 You can install starCAT and its dependencies via the Python Package Index.
 ```bash

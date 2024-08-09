@@ -71,15 +71,16 @@ class BuildConsensusReference(cNMF):
         """
         
         # Load filepaths from cnmf object
+        cnmf_paths = [os.path.normpath(x) for x in cnmf_paths]
         cnmf_objs = []
         self.dataset_names = []
         for path in cnmf_paths:
             if not os.path.exists(path):
                 raise Exception("Input path %s does not exist" % path)
 
-            npath = os.path.normpath(path)
-            name = os.path.basename(npath)
-            cnmf_objs.append(cNMF(output_dir=os.path.dirname(npath), name=name))
+            npath = os.path.dirname(path)
+            name = os.path.basename(path)
+            cnmf_objs.append(cNMF(output_dir=npath, name=name))
             self.dataset_names.append(name)
             
         if (any([ks, density_thresholds])) & (not any([tpm_fns, score_fns])):

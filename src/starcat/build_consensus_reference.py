@@ -247,19 +247,18 @@ class BuildConsensusReference(cNMF):
 
         # Define adjacency matrix between GEP pairs
         self.A = pd.DataFrame(np.zeros((self.R.shape[0], self.R.shape[1])), index = self.R.index, columns = self.R.columns)
-
+        dataset_ind = pd.Series([gep.split(':')[0] for gep in self.R.index], index=self.R.index)
+        other_dataset_map = {x:dataset_ind.index[dataset_ind!=x] for x in self.dataset_names}
+    
         # Define an edge for correlated GEPs not from the same cNMF result
-        for gep in self.R.columns:
-            result_name = gep.split(':')[0]
-            other_geps = [other_gep for other_gep in self.R.columns if not result_name in other_gep]
-            top_geps = self.R.loc[other_geps, gep].sort_values(ascending = False).head(self.order_thresh)
-            top_geps = top_geps.loc[top_geps > self.corr_thresh]    
+        for gep in self.R.columns:            
+            ds = gep.split(':')[0]
+            top_geps = self.R.loc[other_dataset_map[ds], gep].sort_values(ascending = False).head(self.order_thresh)
+            top_geps = top_geps.loc[top_geps > self.corr_thresh]
 
-            # Remove duplicated dataset programs
-            top_geps_result = pd.concat([top_geps, pd.Series([gepY.split(':')[0] for gepY in top_geps.index], 
-                                                      index = top_geps.index, name = 'cNMF_result')], axis = 1)
-            top_geps = top_geps_result.drop_duplicates('cNMF_result')[gep]
-            self.A.loc[gep, top_geps.index] = top_geps
+            # Remove GEPs from the same dataset
+            tokeep = dataset_ind.loc[top_geps.index].drop_duplicates().index  
+            self.A.loc[gep, tokeep] = top_geps.loc[tokeep]
 
         # Order by correlation
         ord_A = pd.DataFrame(self.A.unstack().sort_values(ascending = False)).reset_index()
@@ -295,6 +294,7 @@ class BuildConsensusReference(cNMF):
         clus_df = pd.DataFrame.from_dict(clus_dict_all, orient='index', 
                                          columns = ['GEP%d' % x for x in range(1, self.num_results+1)])
         result_names = sorted(clus_df.unstack().dropna().apply(lambda x: x.split(':')[0]).unique())
+        
         clus_df_clean = pd.DataFrame(index=clus_df.index, columns=result_names)
         clus_df_clean_forlabel = clus_df.unstack().reset_index().dropna()
         clus_df_clean_forlabel['cNMF_result'] = clus_df_clean_forlabel[0].apply(lambda x: x.split(':')[0])

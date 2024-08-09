@@ -303,6 +303,7 @@ class BuildConsensusReference(cNMF):
                                           clus_df_clean_forlabel.at[i, 'cNMF_result']] = clus_df_clean_forlabel.at[i, 0]
         clus_list = [(clus_df_clean[clus_df_clean==gep]).dropna(how = 'all').index[0] for gep in self.R.index]
         clus_df_clean.index = 'cGEP' + clus_df_clean.index.astype(str)
+        clus_df_clean = clus_df_clean[self.dataset_names]
 
         return(clus_df_clean, clus_list)
 

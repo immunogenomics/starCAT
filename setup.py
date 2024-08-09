@@ -37,6 +37,7 @@ setuptools.setup(
    'palettable',
    'scipy',
    'pyyaml',
-   'cnmf'
+    'cnmf',
+    'requests'
    ]
 )

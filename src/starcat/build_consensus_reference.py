@@ -95,6 +95,11 @@ class BuildConsensusReference(cNMF):
             raise TypeError('Object types %s, %s and %s, %s are not valid. Please pass only ks/density_thresholds OR \
             tpm_fns/score_fns.' % (type(ks), type(density_thresholds), type(tpm_fns), type(score_fns)))
 
+        for i in range(len(cnmf_paths)):
+            if any([cnmf_paths[i] != os.path.dirname(score_fns[i])]) or any([cnmf_paths[i] != os.path.dirname(tpm_fns[i])]):
+                warnings.warn('At least one cnmf directory path is inconsistent with a spectra path.\
+                              IF inputting score and tpm files, ensure they are in the same order as cnmf_paths')
+        
         self.num_results = len(cnmf_objs)    
         self.spectra_tpm_all = []
         self.spectra_score_all = []
@@ -139,9 +144,7 @@ class BuildConsensusReference(cNMF):
         all_genes = list(set(spectra_tpm.columns) for spectra_tpm in self.spectra_tpm_all)
         intersect_genes_all = sorted(set.intersection(*all_genes))
         union_genes_all = sorted(set.intersection(*all_genes))
-
         
-        # Renormalize and variance-normalize TPM spectra for all cNMF objects
         # Renormalize and variance-normalize TPM spectra for all cNMF objects
         merged_data = {'TPM_Renorm_VarNorm':[], 'Scores':[] }
 

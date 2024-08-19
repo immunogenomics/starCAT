@@ -1,3 +1,3 @@
-#Last updated 3/12/24										
-Reference_Number	Name	Version	Cell_Type	Tissue	Species	Contexts	Upload_Date	Ref_ID	Publication_Link	Author_Email
-1	TCAT.V1	1	T-cells	"PBMC, Synovium, Tumor, Multi-Organ"	Homo sapiens	"Healthy, Vaccine, Covid-19, Rheumatoid Arthritis, Tumor"	4/21/24	1D76u4ZVX66Xgz6uo4EtnAis_T8KVVUq3	Not published	dkotliar@broadinstitute.org
+#Last updated 8/19/2024											
+Reference_Number	Name	Version	Cell_Type	Tissue	Species	Contexts	Upload_Date	Ref_ID	Publication_Link	Author_Email	Description
+1	TCAT.V1	1	T-cells	"PBMC, Synovium, Tumor, Multi-Organ"	Homo sapiens	"Healthy, Vaccine, Covid-19, Rheumatoid Arthritis, Tumor"	4/21/24	1D76u4ZVX66Xgz6uo4EtnAis_T8KVVUq3	https://www.biorxiv.org/content/10.1101/2024.05.03.592310v1	dkotliar@broadinstitute.org	"52 gene expression programs derived from T-cells across 7 reference datasets. Includes derived discrete and continuous scores for predicting proliferation and antigen-specific activation (ASA), as well as discrete labels for T-cell lineage. See publication for details."

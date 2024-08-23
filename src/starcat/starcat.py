@@ -9,6 +9,7 @@ import yaml
 import requests
 import tarfile
 import warnings
+from sklearn.decomposition import non_negative_factorization
 
 reference_url = 'https://raw.githubusercontent.com/immunogenomics/starCAT/main/current_references.tsv'
 _nmf_kwargs = dict(

@@ -3,7 +3,6 @@
 import pandas as pd
 import numpy as np
 from scipy.stats import pearsonr
-from cnmf import cNMF
 import scanpy as sc
 import os
 import scipy.sparse as sp
@@ -37,8 +36,16 @@ def df_col_corr(X, Y):
     R = pd.DataFrame(R, index=X.columns, columns=Y.columns)
     return(R)
 
+cnmf_dir_strs = {
+                'nmf_genes_list' :  os.path.join('{odir}', '{name}', '{name}'+'.overdispersed_genes.txt'),
+                'tpm_stats' :  os.path.join('{odir}', '{name}', 'cnmf_tmp', '{name}'+'.tpm_stats.df.npz'),
+                'gene_spectra_score__txt': os.path.join('{odir}', '{name}', '{name}'+'.gene_spectra_score.k_{k}.dt_{ldstr}.txt'),
+                'gene_spectra_tpm__txt': os.path.join('{odir}', '{name}', '{name}'+'.gene_spectra_tpm.k_{k}.dt_{ldstr}.txt'),
+                'starcat_spectra__txt': os.path.join('{odir}', '{name}', '{name}'+'.starcat_spectra.k_{k}.dt_{ldstr}.txt'),
+            }
 
-class BuildConsensusReference(cNMF):  
+
+class BuildConsensusReference():  
     def __init__(self, cnmf_paths, output_dir='.', prefix = '', ks = None, density_thresholds = None,
                  tpm_fns = None, score_fns = None, order_thresh = None, corr_thresh = 0.5, pct_thresh = 0.666):
         """
@@ -46,8 +53,8 @@ class BuildConsensusReference(cNMF):
         
         Parameters
         ----------
-        cnmf_objs: list, paths to cNMF project directories for clustering. Should include the cNMF name
-            at the end of the path, I.e. [cnmf_output_dir]/[cnmf_name]
+        cnmf_paths : list, paths to cNMF project directories for clustering. Should include the cNMF project
+            name at the end of the path, I.e. [cnmf_output_dir]/[cnmf_name]
 
         output_dir : path, optional (default=".") output directory for spectra results
 
@@ -72,7 +79,7 @@ class BuildConsensusReference(cNMF):
         
         # Load filepaths from cnmf object
         cnmf_paths = [os.path.normpath(x) for x in cnmf_paths]
-        cnmf_objs = []
+        odir_paths = []
         self.dataset_names = []
         for path in cnmf_paths:
             if not os.path.exists(path):
@@ -80,17 +87,16 @@ class BuildConsensusReference(cNMF):
 
             npath = os.path.dirname(path)
             name = os.path.basename(path)
-            cnmf_objs.append(cNMF(output_dir=npath, name=name))
+            odir_paths.append(npath)
             self.dataset_names.append(name)
             
         if (any([ks, density_thresholds])) & (not any([tpm_fns, score_fns])):
             tpm_fns = []
             score_fns = []
-            for n, cnmf_obj in enumerate(cnmf_objs):
-                tpm_fns += [cnmf_obj.paths['gene_spectra_tpm__txt'] % (ks[n], 
-                                    str(density_thresholds[n]).replace('.', '_'))]
-                score_fns += [cnmf_obj.paths['gene_spectra_score__txt'] % (ks[n], 
-                                    str(density_thresholds[n]).replace('.', '_'))]
+            for i in range(len(cnmf_paths)):
+                ldstr= str(density_thresholds[i]).replace('.', '_')
+                tpm_fns.append(cnmf_dir_strs['gene_spectra_tpm__txt'].format(odir=npath, name=name, k=ks[i], ldstr=ldstr))
+                score_fns.append(cnmf_dir_strs['gene_spectra_score__txt'].format(odir=npath, name=name, k=ks[i], ldstr=ldstr))
 
         elif not (not any([ks, density_thresholds])) & (any([tpm_fns, score_fns])):
             raise TypeError('Object types %s, %s and %s, %s are not valid. Please pass only ks/density_thresholds OR \
@@ -117,15 +123,15 @@ class BuildConsensusReference(cNMF):
             self.order_thresh = order_thresh
 
         # Load spectra, stats, HVGs
-        for n, (cnmf_obj, tpm_fn, score_fn) in enumerate(zip(cnmf_objs, tpm_fns, score_fns)):
-            tpm_stats = load_df_from_npz(cnmf_obj.paths['tpm_stats'])
+        for i, (tpm_fn, score_fn) in enumerate(zip(tpm_fns, score_fns)):
+            tpm_stats = load_df_from_npz(cnmf_dir_strs['tpm_stats'].format(odir=odir_paths[i], name=self.dataset_names[i]))
             stds = tpm_stats['__std']
             spectra_tpm = pd.read_csv(tpm_fn, index_col = 0, sep = '\t')
             spectra_tpm = spectra_tpm.loc[:, ~spectra_tpm.columns.str.contains('AB_|prot')]
             spectra_tpm.index = '%s:' % (self.dataset_names[n]) + spectra_tpm.index.astype(str)
             spectra_score = pd.read_csv(score_fn, index_col = 0, sep = '\t')
             spectra_score.index = '%s:' % (self.dataset_names[n]) + spectra_score.index.astype(str)
-            hvgs = open(cnmf_obj.paths['nmf_genes_list']).read().split('\n')
+            hvgs = open(cnmf_dir_strs['nmf_genes_list'].format(odir=odir_paths[i], name=self.dataset_names[i])).read().split('\n')
             
             self.spectra_tpm_all += [spectra_tpm]
             self.spectra_score_all += [spectra_score]

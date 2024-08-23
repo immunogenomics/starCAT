@@ -95,19 +95,19 @@ class BuildConsensusReference():
             score_fns = []
             for i in range(len(cnmf_paths)):
                 ldstr= str(density_thresholds[i]).replace('.', '_')
-                tpm_fns.append(cnmf_dir_strs['gene_spectra_tpm__txt'].format(odir=npath, name=name, k=ks[i], ldstr=ldstr))
-                score_fns.append(cnmf_dir_strs['gene_spectra_score__txt'].format(odir=npath, name=name, k=ks[i], ldstr=ldstr))
+                tpm_fns.append(cnmf_dir_strs['gene_spectra_tpm__txt'].format(odir=odir_paths[i], name=self.dataset_names[i], k=ks[i], ldstr=ldstr))
+                score_fns.append(cnmf_dir_strs['gene_spectra_score__txt'].format(odir=odir_paths[i], name=self.dataset_names[i], k=ks[i], ldstr=ldstr))
 
         elif not (not any([ks, density_thresholds])) & (any([tpm_fns, score_fns])):
             raise TypeError('Object types %s, %s and %s, %s are not valid. Please pass only ks/density_thresholds OR \
             tpm_fns/score_fns.' % (type(ks), type(density_thresholds), type(tpm_fns), type(score_fns)))
-
+        
         for i in range(len(cnmf_paths)):
             if any([cnmf_paths[i] != os.path.dirname(score_fns[i])]) or any([cnmf_paths[i] != os.path.dirname(tpm_fns[i])]):
                 warnings.warn('At least one cnmf directory path is inconsistent with a spectra path.\
                               IF inputting score and tpm files, ensure they are in the same order as cnmf_paths')
         
-        self.num_results = len(cnmf_objs)    
+        self.num_results = len(cnmf_paths)    
         self.spectra_tpm_all = []
         self.spectra_score_all = []
         self.hvgs_all = []
@@ -128,9 +128,9 @@ class BuildConsensusReference():
             stds = tpm_stats['__std']
             spectra_tpm = pd.read_csv(tpm_fn, index_col = 0, sep = '\t')
             spectra_tpm = spectra_tpm.loc[:, ~spectra_tpm.columns.str.contains('AB_|prot')]
-            spectra_tpm.index = '%s:' % (self.dataset_names[n]) + spectra_tpm.index.astype(str)
+            spectra_tpm.index = '%s:' % (self.dataset_names[i]) + spectra_tpm.index.astype(str)
             spectra_score = pd.read_csv(score_fn, index_col = 0, sep = '\t')
-            spectra_score.index = '%s:' % (self.dataset_names[n]) + spectra_score.index.astype(str)
+            spectra_score.index = '%s:' % (self.dataset_names[i]) + spectra_score.index.astype(str)
             hvgs = open(cnmf_dir_strs['nmf_genes_list'].format(odir=odir_paths[i], name=self.dataset_names[i])).read().split('\n')
             
             self.spectra_tpm_all += [spectra_tpm]

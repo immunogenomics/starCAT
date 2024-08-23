@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="starcatpy",
-    version="1.0.4",
+    version="1.0.5",
     author="Dylan Kotliar, Michelle Curtis",
     author_email="dylkot@gmail.com, curtism@broadinstitute.org",
     description="Implements *CellAnnotator (aka *CAT/starCAT), annotating scRNA-Seq with predefined gene expression programs",
@@ -32,12 +32,8 @@ setuptools.setup(
    'scanpy',
    'pandas',
    'numpy',
-   'fastcluster',
-   'matplotlib',
-   'palettable',
    'scipy',
    'pyyaml',
-    'cnmf',
-    'requests'
+   'requests'
    ]
 )

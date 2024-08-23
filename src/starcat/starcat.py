@@ -2,7 +2,6 @@
 
 import pandas as pd
 import numpy as np
-from cnmf import cNMF
 import scanpy as sc
 import os
 import scipy.sparse as sp
@@ -72,7 +71,7 @@ def load_table_url(url, **kwargs):
         raise Exception('Failed to load url: %s' % url)
 
 
-class starCAT(cNMF):  
+class starCAT():  
     def __init__(self, reference = 'TCAT.V1', score_path = None, cachedir='./cache'):
         """
         Runs *CAT on a query dataset.
@@ -294,7 +293,7 @@ class starCAT(cNMF):
 
         nmf_kwargs['H'] = spectra
         nmf_kwargs['n_components'] = spectra.shape[0]
-        _, rf_usages = self._nmf(X, nmf_kwargs=nmf_kwargs)            
+        rf_usages, _, _ = non_negative_factorization(X, **nmf_kwargs)
         return(rf_usages)
     
     

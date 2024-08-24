@@ -11,7 +11,7 @@ import tarfile
 import warnings
 from sklearn.decomposition import non_negative_factorization
 
-reference_url = 'https://raw.githubusercontent.com/immunogenomics/starCAT/main/current_references.tsv'
+reference_url = os.path.abspath(os.path.join(__file__, '../../../current_references.tsv'))
 _nmf_kwargs = dict(
                    beta_loss='frobenius',
                    solver='mu',
@@ -72,6 +72,18 @@ def load_table_url(url, **kwargs):
         raise Exception('Failed to load url: %s' % url)
 
 
+def detect_compression_type(file_path):
+    """Detects if a file is gzip or bzip2 based on its header."""
+    with open(file_path, 'rb') as f:
+        file_start = f.read(2)
+        if file_start == b'\x1f\x8b':  # gzip magic number
+            return 'gz'
+        elif file_start == b'BZ':  # bzip2 magic number
+            return 'bz2'
+        else:
+            raise ValueError("Unknown or unsupported compression format")
+
+
 class starCAT():  
     def __init__(self, reference = 'TCAT.V1', score_path = None, cachedir='./cache'):
         """
@@ -118,11 +130,11 @@ class starCAT():
         or using the name of a pre-built reference (default reference is TCAT.V1).
         
         """
-
-        try:
-            ref_list = load_table_url(reference_url, comment='#')
-        except:
-            raise Exception('Failed to load reference database URL file. Make sure you are connected to the internet')
+        ref_list = pd.read_csv(reference_url, comment='#', sep='\t')
+        #try:
+        #    ref_list = load_table_url(reference_url, comment='#')
+        #except:
+        #    raise Exception('Failed to load reference database URL file. Make sure you are connected to the internet')
 
         available_refs = ref_list['Name'].values
 
@@ -143,12 +155,17 @@ class starCAT():
             print('Loading reference from existing cache file for reference %s' % self.ref_name)
         else:
             print('Downloading reference %s to cache' % self.ref_name)
-            ref_id = ref_list.loc[ref_list['Name']==self.ref_name, 'Ref_ID'].values[0]
-            ref_url = 'https://drive.google.com/uc?export=download&id='+ref_id
+            ref_url = ref_list.loc[ref_list['Name']==self.ref_name, 'Link'].values[0]
             self._download_to_cache(ref_url)
        
         ref = pd.read_csv(spectra_fn, index_col = 0, sep = '\t').astype(np.float32)
-        scoredat = self.load_scores(score_path)
+
+        if os.path.exists(score_path):
+            scoredat = self.load_scores(score_path)
+        else:
+            print('No derived score data available for reference %s' % self.ref_name)
+            scoredat = None
+            
         return(ref, scoredat, score_path)
 
 
@@ -158,7 +175,7 @@ class starCAT():
         '''
         if score_path == None:
             print('No scores provided')
-            return({})
+            return(None)
         else:
             with open(score_path, 'r') as f:
                 return(yaml.safe_load(f))
@@ -171,16 +188,24 @@ class starCAT():
             print('Making empty cache directory "%s"' % self._cache)
 
         if not os.path.isdir(os.path.join(self._cache, self.ref_name)):
-            response = requests.get(ref_url)
+            response = requests.get(ref_url, stream=True)
+            response.raise_for_status()
                 
             print('Caching reference to %s' % os.path.join(self._cache, self.ref_name))
             tar_fn = os.path.join(self._cache, '%s.tar.gz' % self.ref_name)
+            
             with open(tar_fn, 'wb') as f:
-                f.write(response.content)
-                    
-            with tarfile.open(tar_fn, 'r:gz') as tar:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)                    
+            
+            compression_type = detect_compression_type(tar_fn)
+            mode = f'r:{compression_type}'
+
+            
+            with tarfile.open(tar_fn, mode) as tar:
                 tar.extractall(self._cache)
 
+            os.remove(tar_fn)
     
     def load_counts(self, counts_fn):
         """
@@ -226,7 +251,7 @@ class starCAT():
         self.usage = self.fit_query_usage(query)
         self.usage_norm = self.usage.div(self.usage.sum(axis=1), axis=0)
         
-        if len(self.score_data) > 0:
+        if self.score_data is not None:
             self.scores = self.compute_addon_scores()
         
         if return_unnormalized:

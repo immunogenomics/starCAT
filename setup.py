@@ -22,6 +22,10 @@ setuptools.setup(
     ],
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
+    include_package_data=True,
+    package_data={
+        "starcat": ["current_references.tsv"],
+    },
     entry_points={
         'console_scripts': [
             'starcat = starcat:main',

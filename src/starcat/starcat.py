@@ -11,7 +11,8 @@ import tarfile
 import warnings
 from sklearn.decomposition import non_negative_factorization
 
-reference_url = os.path.abspath(os.path.join(__file__, '../../../current_references.tsv'))
+reference_url = os.path.join(os.path.dirname(__file__), 'current_references.tsv')
+
 _nmf_kwargs = dict(
                    beta_loss='frobenius',
                    solver='mu',

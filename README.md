@@ -13,7 +13,11 @@ You can install starCAT and its dependencies via the Python Package Index.
 pip install starcatpy
 ```
 
-We have tested it with scikit-learn 1.0.3, Scanpy 1.8, and python 3.7. You need the jupyter or jupyterlab packages to access the tutorial notebooks. In addition, building the UMAP in the tutorial requires python 3.8+
+We tested it with scikit-learn 1.3.2, AnnData 0.9.2, and python 3.8. To run the tutorials, you also need jupyter or jupyterlab as well as scanpy and cnmf:
+
+```bash
+pip install jupyterlab scanpy cnmf
+```
 
 
 ## Basic starCAT usage

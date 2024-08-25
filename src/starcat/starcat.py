@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-import scanpy as sc
+from anndata import read_h5ad, AnnData
 import os
 import scipy.sparse as sp
 import yaml
@@ -10,6 +10,8 @@ import requests
 import tarfile
 import warnings
 from sklearn.decomposition import non_negative_factorization
+from sklearn import preprocessing
+from .utils import read_10x_mtx
 
 reference_url = os.path.join(os.path.dirname(__file__), 'current_references.tsv')
 
@@ -20,7 +22,9 @@ _nmf_kwargs = dict(
                    max_iter=1000,
                    init='random',
                    update_H = False
-                   )  
+                   )
+
+warnings.simplefilter("once")
 
 
 def is_integer_matrix(matrix):
@@ -218,16 +222,16 @@ class starCAT():
         
         """
         if counts_fn.endswith('.h5ad'):
-            adata = sc.read(counts_fn) 
+            adata = read_h5ad(counts_fn) 
             
-        elif counts_fn.endswith('.mtx.gz'):
+        elif counts_fn.endswith('.mtx.gz') or counts_fn.endswith('.mtx'):
             counts_dir = os.path.dirname(counts_fn)
-            adata = sc.read_10x_mtx(path = counts_dir)
+            adata = read_10x_mtx(path = counts_dir)
                 
         # Convert other forms of query data to AnnData objects
         else:
             input_counts = pd.read_csv(counts_fn, sep='\t', index_col=0)
-            adata = sc.AnnData(X=input_counts.values,
+            adata = AnnData(X=input_counts.values,
                                    obs=pd.DataFrame(index=input_counts.index),
                                    var=pd.DataFrame(index=input_counts.columns))
             
@@ -270,10 +274,10 @@ class starCAT():
 
         """
         
-        if not isinstance(query, (pd.DataFrame, sc.AnnData)):
-            raise TypeError('%s is not a valid object type. Please convert to pd.DataFrame or sc.AnnData.' % type(query))
+        if not isinstance(query, (pd.DataFrame, AnnData)):
+            raise TypeError('%s is not a valid object type. Please convert to pd.DataFrame or AnnData.' % type(query))
         elif isinstance(query, pd.DataFrame):
-            query = sc.AnnData(X=query.values, obs=pd.DataFrame(index=query.index), var=pd.DataFrame(index=query.columns))
+            query = AnnData(X=query.values, obs=pd.DataFrame(index=query.index), var=pd.DataFrame(index=query.columns))
             
         if not is_nonnegative_matrix(query.X):
             raise Exception("""query input contains negative values. Must be non-negative""")
@@ -286,7 +290,11 @@ class starCAT():
         print('%d out of %d genes in the reference overlap with the query' % (len(overlap_genes), self.ref.shape[1]))
         self.overlap_genes = overlap_genes
         query = query[:, self.overlap_genes].copy()
-        sc.pp.scale(query, zero_center=False)
+        num_zeros = (np.array(query.X.sum(axis=0)).reshape(-1) == 0).sum()
+        if num_zeros > 0:
+            warnings.warn("""WARNING!: query input has %d genes with 0 counts after overlapping with query. Normalized values for these genes are set to 0.""" % num_zeros, UserWarning)
+        
+        query.X = preprocessing.scale(query.X, with_mean=False)
 
         # In python 3.10, scale casts query as float64. Here just ensure its same dtype as reference
         if query.X.dtype != self.ref.values.dtype:

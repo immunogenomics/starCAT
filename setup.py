@@ -33,7 +33,7 @@ setuptools.setup(
     },
     install_requires=[
    'scikit-learn>=1.0',
-   'scanpy',
+   'anndata',
    'pandas',
    'numpy',
    'scipy',

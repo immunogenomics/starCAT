@@ -3,7 +3,6 @@
 import pandas as pd
 import numpy as np
 from scipy.stats import pearsonr
-import scanpy as sc
 import os
 import scipy.sparse as sp
 import yaml

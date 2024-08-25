@@ -24,9 +24,6 @@ _nmf_kwargs = dict(
                    update_H = False
                    )
 
-warnings.simplefilter("once")
-
-
 def is_integer_matrix(matrix):
     # Check if the matrix is a sparse matrix
     if sp.issparse(matrix):

@@ -2,6 +2,8 @@ from pathlib import Path
 from anndata import read_mtx, AnnData
 from anndata.utils import make_index_unique
 import pandas as pd
+import tarfile
+
 
 def read_10x_mtx(path, var_names = "gene_symbols", make_unique = True, gex_only = True, prefix = None):
     """\
@@ -73,3 +75,22 @@ def _read_10x_mtx(path, var_names = "gene_symbols", make_unique = True, cache = 
     barcodes = pd.read_csv(path / f"{prefix}barcodes.tsv{suffix}", header=None)
     adata.obs_names = barcodes[0].values
     return adata
+
+
+def detect_compression_type(file_path):
+    """Detects if a file is gzip or bzip2 based on its header."""
+    with open(file_path, 'rb') as f:
+        file_start = f.read(2)
+        if file_start == b'\x1f\x8b':  # gzip magic number
+            return 'gz'
+        elif file_start == b'BZ':  # bzip2 magic number
+            return 'bz2'
+        else:
+            raise ValueError("Unknown or unsupported compression format")
+
+
+def decompress_tar(tar_fn, outdir='.'):                  
+    compression_type = detect_compression_type(tar_fn)
+    mode = f'r:{compression_type}'
+    with tarfile.open(tar_fn, mode) as tar:
+        tar.extractall(outdir)

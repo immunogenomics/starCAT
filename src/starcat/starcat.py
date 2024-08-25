@@ -7,11 +7,10 @@ import os
 import scipy.sparse as sp
 import yaml
 import requests
-import tarfile
 import warnings
 from sklearn.decomposition import non_negative_factorization
 from sklearn import preprocessing
-from .utils import read_10x_mtx
+from .utils import read_10x_mtx, decompress_tar
 
 reference_url = os.path.join(os.path.dirname(__file__), 'current_references.tsv')
 
@@ -54,18 +53,6 @@ def load_df_from_npz(filename):
     with np.load(filename, allow_pickle=True) as f:
         obj = pd.DataFrame(**f)
     return obj
-
-
-def detect_compression_type(file_path):
-    """Detects if a file is gzip or bzip2 based on its header."""
-    with open(file_path, 'rb') as f:
-        file_start = f.read(2)
-        if file_start == b'\x1f\x8b':  # gzip magic number
-            return 'gz'
-        elif file_start == b'BZ':  # bzip2 magic number
-            return 'bz2'
-        else:
-            raise ValueError("Unknown or unsupported compression format")
 
 
 class starCAT():  
@@ -180,15 +167,9 @@ class starCAT():
             
             with open(tar_fn, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)                    
-            
-            compression_type = detect_compression_type(tar_fn)
-            mode = f'r:{compression_type}'
+                    f.write(chunk)    
 
-            
-            with tarfile.open(tar_fn, mode) as tar:
-                tar.extractall(self._cache)
-
+            decompress_tar(tar_fn, outdir=self._cache)
             os.remove(tar_fn)
     
     def load_counts(self, counts_fn):

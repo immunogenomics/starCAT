@@ -221,6 +221,9 @@ class starCAT():
         counts_fn : str, path to input counts matrix (ex. *.h5ad, *.mtx.gz). If neither, assumes tab-delimited text file
         
         """
+        if not os.path.exists(counts_fn):
+            raise FileNotFoundError(f"The specified file does not exist: {counts_fn}")
+
         if counts_fn.endswith('.h5ad'):
             adata = read_h5ad(counts_fn) 
             

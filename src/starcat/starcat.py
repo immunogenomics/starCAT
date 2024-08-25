@@ -56,24 +56,6 @@ def load_df_from_npz(filename):
     return obj
 
 
-def load_table_url(url, **kwargs):
-    '''
-    Load URL from web.
-    
-    Additional key word arguments are passed to pandas.read_csv
-    '''
-    response = requests.get(url)
-
-    # Ensure the request was successful
-    if response.status_code == 200:
-        # Use pandas to read the tab-delimited file
-        from io import StringIO
-        data = pd.read_csv(StringIO(response.text), sep='\t', **kwargs)
-        return(data)
-    else:
-        raise Exception('Failed to load url: %s' % url)
-
-
 def detect_compression_type(file_path):
     """Detects if a file is gzip or bzip2 based on its header."""
     with open(file_path, 'rb') as f:

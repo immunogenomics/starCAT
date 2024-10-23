@@ -70,6 +70,9 @@ starcat --reference "TCAT.V1" --counts {counts_fn} --output-dir {output_dir} --n
 * --output-dir - the output directory. all output will be placed in {output-dir}/{name}...'. default directory is '.'
 * --name - the output analysis prefix name, default is 'starCAT'
 
+## Alternate implementation
+For small datasets (<2 GB), try running starCAT without installing any packages on our [website](https://immunogenomics.io/starcat/).
+
 ## Creating your own reference
 
 We provide example scripts for constructing custom starCAT references from [a single cNMF run](./Examples/build_reference_vignette.ipynb) or [multiple cNMF runs](./Examples/build_multidataset_reference_vignette.ipynb). 

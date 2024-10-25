@@ -13,6 +13,8 @@ from sklearn import preprocessing
 from .utils import read_10x_mtx, decompress_tar
 
 reference_url = os.path.join(os.path.dirname(__file__), 'current_references.tsv')
+ref_list = pd.read_csv(reference_url, comment='#', sep='\t')
+available_refs = ref_list['Name'].values
 
 _nmf_kwargs = dict(
                    beta_loss='frobenius',
@@ -101,13 +103,6 @@ class starCAT():
         or using the name of a pre-built reference (default reference is TCAT.V1).
         
         """
-        ref_list = pd.read_csv(reference_url, comment='#', sep='\t')
-        #try:
-        #    ref_list = load_table_url(reference_url, comment='#')
-        #except:
-        #    raise Exception('Failed to load reference database URL file. Make sure you are connected to the internet')
-
-        available_refs = ref_list['Name'].values
 
         if self.ref_name not in available_refs:
             refliststr = ','.join(available_refs)

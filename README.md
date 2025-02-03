@@ -71,7 +71,7 @@ starcat --reference "TCAT.V1" --counts {counts_fn} --output-dir {output_dir} --n
 * --name - the output analysis prefix name, default is 'starCAT'
 
 ## Alternate implementation
-For small datasets (<2 GB), try running starCAT without installing any packages on our [website](https://immunogenomics.io/starcat/).
+For small datasets (smaller than ~50,000 cells or 700 MB), try running starCAT without installing any packages on our [website](https://immunogenomics.io/starcat/).
 
 ## Creating your own reference
 

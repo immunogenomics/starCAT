@@ -70,6 +70,10 @@ starcat --reference "TCAT.V1" --counts {counts_fn} --output-dir {output_dir} --n
 * --output-dir - the output directory. all output will be placed in {output-dir}/{name}...'. default directory is '.'
 * --name - the output analysis prefix name, default is 'starCAT'
 
+
+For code to reproduce figures and analyses from our manuscript, please refer to the [TCAT analysis](https://github.com/immunogenomics/TCAT_analysis) Github.
+
+
 ## Alternate implementation
 For small datasets (smaller than ~50,000 cells or 700 MB), try running starCAT without installing any packages on our [website](https://immunogenomics.io/starcat/).
 

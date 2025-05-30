@@ -149,7 +149,7 @@ class BuildConsensusReference():
 
         all_genes = list(set(spectra_tpm.columns) for spectra_tpm in self.spectra_tpm_all)
         intersect_genes_all = sorted(set.intersection(*all_genes))
-        union_genes_all = sorted(set.intersection(*all_genes))
+        union_genes_all = sorted(set.union(*all_genes))
         
         # Renormalize and variance-normalize TPM spectra for all cNMF objects
         merged_data = {'TPM_Renorm_VarNorm':[], 'Scores':[] }

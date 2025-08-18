@@ -160,7 +160,12 @@ class BuildConsensusReference():
             spectra_renorm = spectra_renorm.div(spectra_renorm.sum(axis=1), axis=0)*1e6
             spectra_varnorm = spectra_renorm.div(self.stds_all[n][spectra_renorm.columns])
             new_genes = sorted(set(union_genes_all) - set(spectra_scores.columns))
-            spectra_scores[new_genes] = np.nan
+            
+            # Create new columns DataFrame and concatenate to avoid fragmentation
+            if new_genes:
+                new_columns_df = pd.DataFrame(np.nan, index=spectra_scores.index, columns=new_genes)
+                spectra_scores = pd.concat([spectra_scores, new_columns_df], axis=1)
+            
             spectra_scores = spectra_scores[union_genes_all]
 
             merged_data['TPM_Renorm_VarNorm'].append(spectra_varnorm)

@@ -146,6 +146,8 @@ class BuildConsensusReference():
         ----------
 
         """
+        import time
+        start = time.time()
 
         all_genes = list(set(spectra_tpm.columns) for spectra_tpm in self.spectra_tpm_all)
         intersect_genes_all = sorted(set.intersection(*all_genes))
@@ -153,21 +155,21 @@ class BuildConsensusReference():
         
         # Renormalize and variance-normalize TPM spectra for all cNMF objects
         merged_data = {'TPM_Renorm_VarNorm':[], 'Scores':[] }
-
+        Z_merge = []
         for n in range(self.num_results):
             spectra_scores = self.spectra_score_all[n]
             spectra_renorm = self.spectra_tpm_all[n][intersect_genes_all].copy()
             spectra_renorm = spectra_renorm.div(spectra_renorm.sum(axis=1), axis=0)*1e6
             spectra_varnorm = spectra_renorm.div(self.stds_all[n][spectra_renorm.columns])
             new_genes = sorted(set(union_genes_all) - set(spectra_scores.columns))
-            
+
+            #spectra_scores[new_genes] = np.nan - old code that was giving fragmentation warning
             # Create new columns DataFrame and concatenate to avoid fragmentation
-            if new_genes:
+            if len(new_genes)>0:
                 new_columns_df = pd.DataFrame(np.nan, index=spectra_scores.index, columns=new_genes)
                 spectra_scores = pd.concat([spectra_scores, new_columns_df], axis=1)
             
-            spectra_scores = spectra_scores[union_genes_all]
-
+            spectra_scores = spectra_scores[union_genes_all].copy()
             merged_data['TPM_Renorm_VarNorm'].append(spectra_varnorm)
             merged_data['Scores'].append(spectra_scores)
 
@@ -209,6 +211,7 @@ class BuildConsensusReference():
                                     '%sstarcat_consensus_spectra_score.filtered.txt' % self.prefix), '\t')
         open(os.path.join(self.output_dir, '%sstarcat_overdispersed_genes_union.txt' % self.prefix), 
              'w').write('\n'.join(hvgs_union))
+
 
         top_genes = self.get_top_genes(clus_df, spectra_scores_grouped, n_top_genes=30)
         return(clus_df, spectra_tpm_grouped_hvg, spectra_scores_grouped, hvgs_union, top_genes)

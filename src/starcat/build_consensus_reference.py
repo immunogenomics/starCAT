@@ -297,8 +297,9 @@ class BuildConsensusReference():
                 clus_dict_all[gep_num] = [gep]     
         
         # Relabel GEPs and order by cNMF result source
+        max_clus_size = max(len(v) for v in clus_dict_all.values())
         clus_df = pd.DataFrame.from_dict(clus_dict_all, orient='index', 
-                                         columns = ['GEP%d' % x for x in range(1, self.num_results+1)])
+                                         columns = ['GEP%d' % x for x in range(1, max_clus_size+1)])
         result_names = sorted(clus_df.unstack().dropna().apply(lambda x: x.split(':')[0]).unique())
         
         clus_df_clean = pd.DataFrame(index=clus_df.index, columns=result_names)

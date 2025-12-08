@@ -21,7 +21,7 @@ pip install jupyterlab scanpy cnmf
 
 
 ## Basic starCAT usage
-Please see our tutorials in [python](Examples/starCAT_vignette.ipynb) and [R](Examples/starCAT_vignette_R.ipynb). A sample pipeline using a pre-built reference programs (TCAT.V1) is shown below. 
+Please see our tutorials in [python](Examples/starCAT_vignette.ipynb) and [R](Examples/starCAT_vignette_R.ipynb). A sample pipeline using a pre-built reference programs (TCAT.V1) is shown below.
 
 ```python
 # Load default TCAT reference from starCAT databse
@@ -40,6 +40,9 @@ tcat = starCAT(reference='TCAT.V1')
 adata = tcat.load_counts(datafn)
 
 # Run starCAT
+# expects the input data to be raw counts and to be stored in adata.X
+# rather than adata.layers['counts']
+
 usage, scores = tcat.fit_transform(adata)
 
 usage.iloc[0:2, 0:4]

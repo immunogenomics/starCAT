@@ -126,7 +126,6 @@ class BuildConsensusReference():
             tpm_stats = load_df_from_npz(cnmf_dir_strs['tpm_stats'].format(odir=odir_paths[i], name=self.dataset_names[i]))
             stds = tpm_stats['__std']
             spectra_tpm = pd.read_csv(tpm_fn, index_col = 0, sep = '\t')
-            spectra_tpm = spectra_tpm.loc[:, ~spectra_tpm.columns.str.contains('AB_|prot')]
             spectra_tpm.index = '%s:' % (self.dataset_names[i]) + spectra_tpm.index.astype(str)
             spectra_score = pd.read_csv(score_fn, index_col = 0, sep = '\t')
             spectra_score.index = '%s:' % (self.dataset_names[i]) + spectra_score.index.astype(str)

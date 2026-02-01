@@ -4,7 +4,7 @@ Implements starCellAnnoTator (AKA starCAT), annotating scRNA-Seq with predefined
 
 ## Citation
 
-If you use *CAT, please cite our [manuscript](https://www.nature.com/articles/s41592-025-02793-1).
+If you use starCAT, please cite our [manuscript](https://www.nature.com/articles/s41592-025-02793-1).
 
 ## Installation
 

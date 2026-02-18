@@ -1,3 +1,11 @@
+# Testing notebook generated data
+Testing/cache/
+Testing/Example_refbuilder/
+Testing/filtered_gene_bc_matrices/
+Testing/*.h5ad
+Testing/*.txt
+Testing/*.tar.gz
+
 __pycache__/
 
 .ipynb_checkpoints/

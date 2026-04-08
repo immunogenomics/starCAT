@@ -18,7 +18,10 @@ We tested it with scikit-learn 1.3.2, AnnData 0.9.2, and python 3.8. To run the 
 ```bash
 pip install jupyterlab scanpy cnmf
 ```
+## Published and custom references programs
+Several gene expression program references are available for annotation with starCAT, including the T cell reference described in our manuscript. Download and learn more about them on [Zenodo](https://zenodo.org/communities/starcat/records?q=&l=list&p=1&s=10&sort=newest).
 
+We also provide example scripts for constructing custom starCAT references from [a single cNMF run](./Examples/build_reference_vignette.ipynb) or [multiple cNMF runs](./Examples/build_multidataset_reference_vignette.ipynb). Email me at dkotliar@broadinstitute.org if you are interested in making your reference available for others to re-use.
 
 ## Basic starCAT usage
 Please see our tutorials in [python](Examples/starCAT_vignette.ipynb) and [R](Examples/starCAT_vignette_R.ipynb). A sample pipeline using a pre-built reference programs (TCAT.V1) is shown below.
@@ -77,11 +80,5 @@ starcat --reference "TCAT.V1" --counts {counts_fn} --output-dir {output_dir} --n
 For code to reproduce figures and analyses from our manuscript, please refer to the [TCAT analysis](https://github.com/immunogenomics/TCAT_analysis) Github.
 
 
-## Alternate implementation
-For small datasets (smaller than ~50,000 cells or 700 MB), try running starCAT without installing any packages on our [website](https://immunogenomics.io/starcat/).
-
-## Creating your own reference
-
-We provide example scripts for constructing custom starCAT references from [a single cNMF run](./Examples/build_reference_vignette.ipynb) or [multiple cNMF runs](./Examples/build_multidataset_reference_vignette.ipynb). 
-
-__Please let us know if you are interested in making your reference publically available for others to use analogous to our TCAT.V1 reference. You can email me at dkotliar@broadinstitute.org__
+## starCAT website
+For small datasets (smaller than ~50,000 cells or 700 MB), try running starCAT on our [website](https://immunogenomics.io/starcat/).

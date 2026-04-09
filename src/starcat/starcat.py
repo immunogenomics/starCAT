@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from anndata import read_h5ad, AnnData
 import os
+import importlib.util
 import scipy.sparse as sp
 import yaml
 import requests
@@ -305,13 +306,16 @@ class starCAT():
         score_res = pd.DataFrame()
         for score_type in self.score_data['scores']:
             for score in self.score_data['scores'][score_type]:                
-                if score['normalization']=='normalized':
+                # Default to normalized usages; code-based scores receive both
+                # usage_norm and usage_raw and can pick whichever they need.
+                if score.get('normalization', 'normalized') == 'normalized':
                     usage_for_score = self.usage_norm
                 else:
                     usage_for_score = self.usage
 
                 # By default define each score as a weighted sum of GEPs, with default weights of 1
-                if 'file' not in score.keys():
+                is_code_based = ('module' in score) or ('file' in score)
+                if not is_code_based:
                     if 'weights' in score.keys():
                         weights = score['weights']
                     else:
@@ -324,16 +328,39 @@ class starCAT():
                     else:
                         score_res[score['name']] = score_values > score['threshold']    
                         
-                # Optionally execute score code blocks
+                # Optionally call a function defined in a Python module shipped
+                # with the reference. The module is imported via importlib (no exec),
+                # and the named function is called as:
+                #     fn(usage_norm, usage_raw, score_dir) -> pd.Series
                 else:
-                    global_vars = {}
-                    local_vars = {}
-                    global_vars['usage_for_score'] = usage_for_score
-                    global_vars['score_dir'] = os.path.dirname(self.score_path) 
-                    
-                    with open(os.path.join(global_vars['score_dir'], score['file']), 'r') as F:
-                        exec(F.read(), global_vars, local_vars)
-                    score_res[score['name']] = local_vars['res']
+                    score_dir = os.path.dirname(self.score_path)
+                    module_rel = score.get('module', score.get('file'))
+                    func_name = score.get('function')
+                    if module_rel is None or func_name is None:
+                        raise Exception(
+                            "Code-based score '%s' must specify both 'module' "
+                            "(path to .py file relative to the scores yaml) and "
+                            "'function' (name of the callable to invoke)." % score['name']
+                        )
+
+                    module_path = os.path.join(score_dir, module_rel)
+                    mod_name = "starcat_score_%s" % score['name']
+                    spec = importlib.util.spec_from_file_location(mod_name, module_path)
+                    mod = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(mod)
+                    fn = getattr(mod, func_name)
+
+                    res = fn(self.usage_norm, self.usage, score_dir)
+                    if not isinstance(res, pd.Series):
+                        res = pd.Series(res, index=usage_for_score.index, name=score['name'])
+
+                    if score_type == 'continuous':
+                        score_res[score['name']] = res
+                    else:
+                        if 'threshold' in score:
+                            score_res[score['name']] = res > score['threshold']
+                        else:
+                            score_res[score['name']] = res
         
         return score_res
     

@@ -2,8 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from anndata import AnnData
-from anndata.io import read_h5ad
+from anndata import read_h5ad, AnnData
 import os
 import importlib.util
 import scipy.sparse as sp
@@ -343,19 +342,25 @@ class starCAT():
                     # error rather than letting importlib fail confusingly.
                     if 'file' in score:
                         raise Exception(
-                            "Score '%s' uses the legacy exec()-based contract "
-                            "(a `file:` entry in scores.yaml), which is no "
-                            "longer supported in this version of starCAT. This "
-                            "almost always means you are using TCAT.V1 (or a "
-                            "reference packaged the same way). Please switch to "
-                            "TCAT.V2, which ships the same spectra and model but "
-                            "declares scores via `module:`/`function:` and exposes "
-                            "the classifier as an importable function. If this is "
-                            "a custom reference, convert the script to define a "
-                            "function with signature "
-                            "`fn(usage_norm, usage_raw, score_dir) -> pd.Series` "
-                            "and reference it from scores.yaml as "
-                            "`module: <path.py>` / `function: <name>`."
+                            "\n\nScore '%s' uses the legacy exec()-based contract\n"
+                            "(a `file:` entry in scores.yaml), which is no longer\n"
+                            "supported in this version of starCAT.\n"
+                            "\n"
+                            "This almost always means you are using TCAT.V1 (or a\n"
+                            "reference packaged the same way). Please switch to\n"
+                            "TCAT.V2, which ships the same spectra and model but\n"
+                            "declares scores via `module:` / `function:` and\n"
+                            "exposes the classifier as an importable function.\n"
+                            "\n"
+                            "If this is a custom reference, convert the script to\n"
+                            "define a function with signature:\n"
+                            "\n"
+                            "    fn(usage_norm, usage_raw, score_dir) -> pd.Series\n"
+                            "\n"
+                            "and reference it from scores.yaml as:\n"
+                            "\n"
+                            "    module: <path_to_file.py>\n"
+                            "    function: <function_name>\n"
                             % score['name']
                         )
 

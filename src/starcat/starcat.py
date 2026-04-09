@@ -334,6 +334,30 @@ class starCAT():
                 #     fn(usage_norm, usage_raw, score_dir) -> pd.Series
                 else:
                     score_dir = os.path.dirname(self.score_path)
+                    # Detect the legacy TCAT.V1-style contract, which used the
+                    # `file:` key (V2+ uses `module:`). Those scripts were run
+                    # via exec() against magic `score_dir` / `usage_for_score`
+                    # locals and are not importable as normal modules. The
+                    # contract is no longer supported — emit a clear migration
+                    # error rather than letting importlib fail confusingly.
+                    if 'file' in score:
+                        raise Exception(
+                            "Score '%s' uses the legacy exec()-based contract "
+                            "(a `file:` entry in scores.yaml), which is no "
+                            "longer supported in this version of starCAT. This "
+                            "almost always means you are using TCAT.V1 (or a "
+                            "reference packaged the same way). Please switch to "
+                            "TCAT.V2, which ships the same spectra and model but "
+                            "declares scores via `module:`/`function:` and exposes "
+                            "the classifier as an importable function. If this is "
+                            "a custom reference, convert the script to define a "
+                            "function with signature "
+                            "`fn(usage_norm, usage_raw, score_dir) -> pd.Series` "
+                            "and reference it from scores.yaml as "
+                            "`module: <path.py>` / `function: <name>`."
+                            % score['name']
+                        )
+
                     module_rel = score.get('module', score.get('file'))
                     func_name = score.get('function')
                     if module_rel is None or func_name is None:

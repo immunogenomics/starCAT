@@ -2,7 +2,8 @@
 
 import pandas as pd
 import numpy as np
-from anndata import read_h5ad, AnnData
+from anndata import AnnData
+from anndata.io import read_h5ad
 import os
 import importlib.util
 import scipy.sparse as sp

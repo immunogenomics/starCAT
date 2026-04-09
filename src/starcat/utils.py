@@ -1,5 +1,6 @@
 from pathlib import Path
-from anndata import read_mtx, AnnData
+from anndata import AnnData
+from anndata.io import read_mtx
 from anndata.utils import make_index_unique
 import pandas as pd
 import tarfile

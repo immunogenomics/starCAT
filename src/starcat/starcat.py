@@ -211,10 +211,11 @@ class starCAT():
 
         """
 
-        query = self.prepare_query(query)        
+        query = self.prepare_query(query)
         self.usage = self.fit_query_usage(query)
         self.usage_norm = self.usage.div(self.usage.sum(axis=1), axis=0)
-        
+        self.query = query
+
         if self.score_data is not None:
             self.scores = self.compute_addon_scores()
         
@@ -331,7 +332,7 @@ class starCAT():
                 # Optionally call a function defined in a Python module shipped
                 # with the reference. The module is imported via importlib (no exec),
                 # and the named function is called as:
-                #     fn(usage_norm, usage_raw, score_dir) -> pd.Series
+                #     fn(usage_norm, usage_raw, score_dir, adata=...) -> pd.Series
                 else:
                     score_dir = os.path.dirname(self.score_path)
                     # Detect the legacy TCAT.V1-style contract, which used the
@@ -355,7 +356,7 @@ class starCAT():
                             "If this is a custom reference, convert the script to\n"
                             "define a function with signature:\n"
                             "\n"
-                            "    fn(usage_norm, usage_raw, score_dir) -> pd.Series\n"
+                            "    fn(usage_norm, usage_raw, score_dir, **kwargs) -> pd.Series\n"
                             "\n"
                             "and reference it from scores.yaml as:\n"
                             "\n"
@@ -380,7 +381,7 @@ class starCAT():
                     spec.loader.exec_module(mod)
                     fn = getattr(mod, func_name)
 
-                    res = fn(self.usage_norm, self.usage, score_dir)
+                    res = fn(self.usage_norm, self.usage, score_dir, adata=self.query)
                     if not isinstance(res, pd.Series):
                         res = pd.Series(res, index=usage_for_score.index, name=score['name'])
 

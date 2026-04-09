@@ -77,7 +77,7 @@ def _read_10x_mtx(path, var_names = "gene_symbols", make_unique = True, cache = 
     return adata
 
 
-def export_sklearn_model_weights(model_or_path, output_path=None):
+def export_sklearn_model_weights(model_or_path, output_path=None, feature_names=None):
     """
     Extract weights from a sklearn model and save them as a portable JSON
     file that can be used for inference with pure numpy (no sklearn needed
@@ -103,6 +103,10 @@ def export_sklearn_model_weights(model_or_path, output_path=None):
         Path for the output JSON file. Required when passing a model
         object directly. When passing a pkl_path, defaults to replacing
         the .pkl extension with .weights.json.
+    feature_names : list of str, optional
+        Names of the training features in the order the model expects.
+        Stored in the JSON so that score functions can verify or
+        reorder input columns at prediction time.
 
     Returns
     -------
@@ -159,6 +163,11 @@ def export_sklearn_model_weights(model_or_path, output_path=None):
 
     else:
         raise TypeError("Expected a LogisticRegression or Pipeline, got %s" % type(obj))
+
+    if feature_names is not None:
+        if hasattr(feature_names, 'tolist'):
+            feature_names = feature_names.tolist()
+        weights['feature_names'] = list(feature_names)
 
     with open(output_path, 'w') as f:
         json.dump(weights, f)

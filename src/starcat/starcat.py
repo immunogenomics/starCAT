@@ -211,13 +211,13 @@ class starCAT():
 
         """
 
+        query_raw = query
         query = self.prepare_query(query)
         self.usage = self.fit_query_usage(query)
         self.usage_norm = self.usage.div(self.usage.sum(axis=1), axis=0)
-        self.query = query
 
         if self.score_data is not None:
-            self.scores = self.compute_addon_scores()
+            self.scores = self.compute_addon_scores(query_raw=query_raw)
         
         if return_unnormalized:
             return self.usage, self.scores
@@ -292,9 +292,16 @@ class starCAT():
         return(rf_usages)
     
     
-    def compute_addon_scores(self):
+    def compute_addon_scores(self, query_raw=None):
         """
         Compute pre-built reference score add-ons to usages. Currently can be applied to pre-built reference datasets only.
+
+        Parameters
+        ----------
+        query_raw : AnnData or pd.DataFrame, optional
+            The original query data before prepare_query processing.
+            Passed through to code-based score functions as adata so they
+            can access raw counts / full gene set without storing a copy.
         """
 
         if self.score_data is None:
@@ -381,7 +388,7 @@ class starCAT():
                     spec.loader.exec_module(mod)
                     fn = getattr(mod, func_name)
 
-                    res = fn(self.usage_norm, self.usage, score_dir, adata=self.query)
+                    res = fn(self.usage_norm, self.usage, score_dir, adata=query_raw)
                     if not isinstance(res, pd.Series):
                         res = pd.Series(res, index=usage_for_score.index, name=score['name'])
 

@@ -46,10 +46,10 @@ cnmf_dir_strs = {
 
 class BuildConsensusReference():  
     def __init__(self, cnmf_paths, output_dir='.', prefix = '', ks = None, density_thresholds = None,
-                 tpm_fns = None, score_fns = None, order_thresh = None, corr_thresh = 0.5, pct_thresh = 0.666):
+                 tpm_fns = None, score_fns = None, max_neighbors_per_gep = None, corr_thresh = 0.5, pct_thresh = 0.666):
         """
         Class for building consensus gene expression programs (GEPs) from 2 or more cNMF results.
-        
+
         Parameters
         ----------
         cnmf_paths : list, paths to cNMF project directories for clustering. Should include the cNMF project
@@ -66,13 +66,18 @@ class BuildConsensusReference():
         tpm_fns : list, optional list of paths to cNMF TPM spectra paths to cluster (use instead of ks, dts)
 
         score_fns : list, optional list of paths to cNMF spectra score paths (use instead of ks, dts)
-        
-        order_thresh: int, maximum rank for 2 programs to be in each other's top correlated programs and allowed
-            to cluster (default=len(cnmf_objs))
+
+        max_neighbors_per_gep: int or None, optional cap on the number of cross-dataset "neighbor" edges any
+            single GEP can contribute to the adjacency graph. Each GEP's candidate neighbors are those other
+            GEPs (from other datasets) with correlation above corr_thresh; if more than max_neighbors_per_gep
+            candidates exist, only the top-correlated are kept. In practice corr_thresh already filters out
+            spurious partners, so this cap rarely matters and the default (None, meaning no cap) is
+            appropriate for almost all use cases. Set to an int only as a belt-and-suspenders defense for
+            unusually permissive corr_thresh values.
 
         corr_thresh: float, minimum correlation for programs to cluster
-        
-        pct_thresh: float, minimum number of connected programs to add a program to a cluster or merge clusters 
+
+        pct_thresh: float, minimum number of connected programs to add a program to a cluster or merge clusters
 
         """
         
@@ -116,10 +121,7 @@ class BuildConsensusReference():
         self.prefix = prefix
         self.corr_thresh = corr_thresh
         self.pct_thresh = pct_thresh
-        if order_thresh==None:
-            self.order_thresh = self.num_results
-        else:
-            self.order_thresh = order_thresh
+        self.max_neighbors_per_gep = max_neighbors_per_gep
 
         # Load spectra, stats, HVGs
         for i, (tpm_fn, score_fn) in enumerate(zip(tpm_fns, score_fns)):
@@ -264,14 +266,14 @@ class BuildConsensusReference():
         other_dataset_map = {x:dataset_ind.index[dataset_ind!=x] for x in self.dataset_names}
     
         # Define an edge for correlated GEPs not from the same cNMF result
-        for gep in self.R.columns:            
+        for gep in self.R.columns:
             ds = gep.split(':')[0]
-            top_geps = self.R.loc[other_dataset_map[ds], gep].sort_values(ascending = False).head(self.order_thresh)
+            top_geps = self.R.loc[other_dataset_map[ds], gep].sort_values(ascending = False)
             top_geps = top_geps.loc[top_geps > self.corr_thresh]
+            if self.max_neighbors_per_gep is not None:
+                top_geps = top_geps.head(self.max_neighbors_per_gep)
 
-            # Remove GEPs from the same dataset
-            tokeep = dataset_ind.loc[top_geps.index].drop_duplicates().index  
-            self.A.loc[gep, tokeep] = top_geps.loc[tokeep]
+            self.A.loc[gep, top_geps.index] = top_geps
 
         # Order by correlation
         ord_A = pd.DataFrame(self.A.unstack().sort_values(ascending = False)).reset_index()

@@ -46,7 +46,7 @@ cnmf_dir_strs = {
 
 class BuildConsensusReference():  
     def __init__(self, cnmf_paths, output_dir='.', prefix = '', ks = None, density_thresholds = None,
-                 tpm_fns = None, score_fns = None, max_neighbors_per_gep = None, corr_thresh = 0.5, pct_thresh = 0.666):
+                 tpm_fns = None, score_fns = None, hvg_fns = None, max_neighbors_per_gep = None, corr_thresh = 0.5, pct_thresh = 0.666):
         """
         Class for building consensus gene expression programs (GEPs) from 2 or more cNMF results.
 
@@ -66,6 +66,10 @@ class BuildConsensusReference():
         tpm_fns : list, optional list of paths to cNMF TPM spectra paths to cluster (use instead of ks, dts)
 
         score_fns : list, optional list of paths to cNMF spectra score paths (use instead of ks, dts)
+
+        hvg_fns : list, optional list of paths to overdispersed-gene (HVG) files, one per cNMF result. When
+            provided, overrides the default `{cnmf_path}.overdispersed_genes.txt` location. Use this when you
+            have rewritten HVG files with standardized gene symbols and don't want to overwrite the originals.
 
         max_neighbors_per_gep: int or None, optional cap on the number of cross-dataset "neighbor" edges any
             single GEP can contribute to the adjacency graph. Each GEP's candidate neighbors are those other
@@ -131,7 +135,11 @@ class BuildConsensusReference():
             spectra_tpm.index = '%s:' % (self.dataset_names[i]) + spectra_tpm.index.astype(str)
             spectra_score = pd.read_csv(score_fn, index_col = 0, sep = '\t')
             spectra_score.index = '%s:' % (self.dataset_names[i]) + spectra_score.index.astype(str)
-            hvgs = open(cnmf_dir_strs['nmf_genes_list'].format(odir=odir_paths[i], name=self.dataset_names[i])).read().split('\n')
+            if hvg_fns is not None:
+                hvg_path = hvg_fns[i]
+            else:
+                hvg_path = cnmf_dir_strs['nmf_genes_list'].format(odir=odir_paths[i], name=self.dataset_names[i])
+            hvgs = open(hvg_path).read().split('\n')
             
             self.spectra_tpm_all += [spectra_tpm]
             self.spectra_score_all += [spectra_score]

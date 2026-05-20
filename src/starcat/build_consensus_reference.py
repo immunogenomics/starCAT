@@ -46,7 +46,7 @@ cnmf_dir_strs = {
 
 class BuildConsensusReference():  
     def __init__(self, cnmf_paths, output_dir='.', prefix = '', ks = None, density_thresholds = None,
-                 tpm_fns = None, score_fns = None, hvg_fns = None, max_neighbors_per_gep = None, corr_thresh = 0.5, pct_thresh = 0.666):
+                 tpm_fns = None, score_fns = None, hvg_fns = None, tpm_stats_fns = None, max_neighbors_per_gep = None, corr_thresh = 0.5, pct_thresh = 0.666):
         """
         Class for building consensus gene expression programs (GEPs) from 2 or more cNMF results.
 
@@ -70,6 +70,11 @@ class BuildConsensusReference():
         hvg_fns : list, optional list of paths to overdispersed-gene (HVG) files, one per cNMF result. When
             provided, overrides the default `{cnmf_path}.overdispersed_genes.txt` location. Use this when you
             have rewritten HVG files with standardized gene symbols and don't want to overwrite the originals.
+
+        tpm_stats_fns : list, optional list of paths to per-gene std/mean DataFrames (saved via the
+            load_df_from_npz format), one per cNMF result. When provided, overrides the default
+            `{cnmf_path}/cnmf_tmp/{name}.tpm_stats.df.npz` location. Same use case as hvg_fns: feeding in
+            files with standardized gene symbols without overwriting the originals.
 
         max_neighbors_per_gep: int or None, optional cap on the number of cross-dataset "neighbor" edges any
             single GEP can contribute to the adjacency graph. Each GEP's candidate neighbors are those other
@@ -129,7 +134,11 @@ class BuildConsensusReference():
 
         # Load spectra, stats, HVGs
         for i, (tpm_fn, score_fn) in enumerate(zip(tpm_fns, score_fns)):
-            tpm_stats = load_df_from_npz(cnmf_dir_strs['tpm_stats'].format(odir=odir_paths[i], name=self.dataset_names[i]))
+            if tpm_stats_fns is not None:
+                tpm_stats_path = tpm_stats_fns[i]
+            else:
+                tpm_stats_path = cnmf_dir_strs['tpm_stats'].format(odir=odir_paths[i], name=self.dataset_names[i])
+            tpm_stats = load_df_from_npz(tpm_stats_path)
             stds = tpm_stats['__std']
             spectra_tpm = pd.read_csv(tpm_fn, index_col = 0, sep = '\t')
             spectra_tpm.index = '%s:' % (self.dataset_names[i]) + spectra_tpm.index.astype(str)

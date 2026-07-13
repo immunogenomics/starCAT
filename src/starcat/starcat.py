@@ -253,7 +253,16 @@ class starCAT():
         num_zeros = (np.array(query.X.sum(axis=0)).reshape(-1) == 0).sum()
         if num_zeros > 0:
             warnings.warn("""WARNING!: query input has %d genes with 0 counts after overlapping with query. Normalized values for these genes are set to 0.""" % num_zeros, UserWarning)
-        
+
+        # Cells with too few counts can end up with 0 counts across all overlap
+        # genes. NNLS returns an all-zero usage vector for such cells, and the
+        # subsequent normalization (usage / usage.sum(axis=1)) then divides by 0,
+        # producing NaNs in usage_norm that break downstream score calculation.
+        cell_counts = np.array(query.X.sum(axis=1)).reshape(-1)
+        num_empty_cells = (cell_counts == 0).sum()
+        if num_empty_cells > 0:
+            warnings.warn("""WARNING!: query input has %d cells with 0 counts across the %d genes that overlap the reference. These cells will produce all-zero usages and NaN normalized usages/scores. Consider filtering out low-count cells before running starCAT.""" % (num_empty_cells, len(self.overlap_genes)), UserWarning)
+
         query.X = preprocessing.scale(query.X, with_mean=False)
 
         # In python 3.10, scale casts query as float64. Here just ensure its same dtype as reference

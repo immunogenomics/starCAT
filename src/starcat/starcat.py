@@ -17,9 +17,12 @@ reference_url = os.path.join(os.path.dirname(__file__), 'current_references.tsv'
 ref_list = pd.read_csv(reference_url, comment='#', sep='\t')
 available_refs = ref_list['Name'].values
 
+## Coordinate descent converges much closer to the true NNLS solution than multiplicative
+## update for frobenius beta_loss (mu terminates early on the tol criterion at a substantially
+## worse fit), and matches the solver cNMF uses for factorization and usage refitting.
 _nmf_kwargs = dict(
                    beta_loss='frobenius',
-                   solver='mu',
+                   solver='cd',
                    tol=1e-4,
                    max_iter=1000,
                    init='random',

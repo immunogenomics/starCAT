@@ -25,18 +25,7 @@ We also provide example scripts for constructing custom starCAT references from 
 
 ### Compatibility with probe-based assays (e.g. 10x Flex)
 
-**The current references are derived from whole-transcriptome scRNA-Seq (3'/5' droplet data) and are not necessarily compatible with probe-based platforms such as 10x Flex / Fixed RNA Profiling. Usages and scores computed on probe-based datasets should be interpreted with caution.**
-
-starCAT fits usages by non-negative least squares against the reference spectra, restricted to the genes shared between the reference and the query. Probe-based assays measure a restricted, predefined panel rather than the full transcriptome, so a program whose informative genes are largely absent from the panel is only weakly constrained by the data. When that happens its usage is poorly determined, and the expression it does explain can be redistributed onto other programs — so the affected program and its neighbors can both be off, not just the missing one.
-
-Practical guidance:
-
-- Check the gene-overlap line starCAT prints at fit time (`N out of M genes in the reference overlap with the query`). A low overlap is a direct warning sign.
-- Overlap alone is not sufficient: what matters is whether each *individual* program retains its high-weight genes, not how many reference genes survive overall. A program can be unusable even at high total overlap.
-- Prefer building a reference matched to the panel — factorize data from the same platform, or restrict an existing reference to the panel genes and re-derive it — rather than scoring panel data against a whole-transcriptome reference.
-- Treat cross-platform comparisons of usage values (whole-transcriptome vs probe-based) as qualitative unless you have validated the specific programs involved.
-
-The same caution applies to other targeted or imaging-based platforms with restricted gene sets (e.g. Xenium, CosMx, BD Rhapsody targeted panels).
+The current references are derived from whole-transcriptome scRNA-Seq, and we have not established that they behave reliably on probe-based platforms such as 10x Flex, which measure a restricted predefined gene panel. Usages and scores computed on such datasets should be interpreted with caution.
 
 ## Basic starCAT usage
 Please see our tutorials in [python](Examples/starCAT_vignette.ipynb) and [R](Examples/starCAT_vignette_R.ipynb). A sample pipeline using a pre-built reference programs (TCAT.V1) is shown below.

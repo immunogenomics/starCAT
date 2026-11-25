@@ -158,10 +158,22 @@ class BuildConsensusReference():
 
     def cluster_cnmf_results(self):
         """
-        Perform and save clustering of cNMF results. 
+        Perform and save clustering of cNMF results.
 
-        Parameters
-        ----------
+        Writes to output_dir, each with a `.filtered` twin that drops singleton clusters:
+          {prefix}starcat_consensus_clustering.txt              which GEP of each cNMF result is in each cGEP
+          {prefix}starcat_consensus_spectra_normalized.txt      the starCAT reference: mean variance-normalized
+                                                                TPM spectra, union of overdispersed genes
+          {prefix}starcat_consensus_spectra_normalized_allgenes.txt   the same for all shared genes
+          {prefix}starcat_consensus_spectra_tpm.txt             mean TPM spectra (not variance-normalized),
+                                                                all shared genes; see consensus_spectra_tpm
+          {prefix}starcat_consensus_spectra_score.txt           mean gene_spectra_score, union of genes
+        and {prefix}starcat_overdispersed_genes_union.txt.
+
+        Returns
+        -------
+        clus_df, consensus spectra (normalized, overdispersed genes), consensus spectra scores, the union of
+        overdispersed genes, and the top genes per cGEP. The TPM consensus is kept in self.spectra_tpm_consensus.
 
         """
         import time
@@ -227,6 +239,7 @@ class BuildConsensusReference():
                                     '%sstarcat_consensus_spectra_score.txt' % self.prefix), '\t')
         spectra_scores_grouped.loc[filtsingle_index, :].to_csv(os.path.join(self.output_dir, 
                                     '%sstarcat_consensus_spectra_score.filtered.txt' % self.prefix), '\t')
+        self.consensus_spectra_tpm(clus_df, save=True)
         open(os.path.join(self.output_dir, '%sstarcat_overdispersed_genes_union.txt' % self.prefix), 
              'w').write('\n'.join(hvgs_union))
 
@@ -234,6 +247,54 @@ class BuildConsensusReference():
         top_genes = self.get_top_genes(clus_df, spectra_scores_grouped, n_top_genes=30)
         return(clus_df, spectra_tpm_grouped_hvg, spectra_scores_grouped, hvgs_union, top_genes)
     
+
+    def consensus_spectra_tpm(self, clus_df, save=True):
+        """
+        Consensus spectra in TPM units: for each cGEP, the mean over its member GEPs of the cNMF
+        gene_spectra_tpm, restricted to the genes shared by all cNMF results and renormalized to sum to 1e6
+        per GEP. This is the consensus reference before the per-gene variance normalization (the
+        `_normalized_allgenes` output is the same average taken after dividing each cNMF result's spectra by
+        its per-gene standard deviation), so usage x spectrum is in TPM units.
+
+        Can be called on its own with a clustering table from an earlier run (the saved
+        `starcat_consensus_clustering.txt`, read with index_col=0) to add the TPM consensus to an existing
+        reference without re-clustering.
+
+        Parameters
+        ----------
+        clus_df : DataFrame, cGEPs x cNMF results, each entry the '{cNMF result}:{GEP}' name of the member GEP
+            or missing (as returned by cluster_cnmf_results / cluster_geps)
+
+        save : boolean, if True, write {prefix}starcat_consensus_spectra_tpm.txt and its .filtered twin
+            (singleton cGEPs dropped) to output_dir
+
+        Returns
+        -------
+        DataFrame, cGEPs x genes
+        """
+        intersect_genes_all = sorted(set.intersection(*[set(x.columns) for x in self.spectra_tpm_all]))
+        spectra_renorm = pd.concat([x[intersect_genes_all].div(x[intersect_genes_all].sum(axis=1), axis=0)*1e6
+                                    for x in self.spectra_tpm_all], axis=0)
+        members = clus_df.stack()
+        gep_to_cgep = pd.Series(members.index.get_level_values(0), index=members.values)
+        missing = sorted(set(gep_to_cgep.index) - set(spectra_renorm.index))
+        if len(missing) > 0:
+            raise Exception('%d GEPs in clus_df are not in the loaded cNMF results, e.g. %s' % (len(missing), missing[0]))
+
+        spectra_renorm = spectra_renorm.loc[spectra_renorm.index.isin(gep_to_cgep.index), :]
+        spectra_tpm_consensus = spectra_renorm.groupby(gep_to_cgep.loc[spectra_renorm.index].values).mean()
+        spectra_tpm_consensus = spectra_tpm_consensus.loc[[x for x in clus_df.index if x in spectra_tpm_consensus.index], :]
+        self.spectra_tpm_consensus = spectra_tpm_consensus
+
+        if save:
+            filtsingle_index = clus_df[np.sum(-clus_df.isna(), axis = 1)>1].index
+            spectra_tpm_consensus.to_csv(os.path.join(self.output_dir,
+                                    '%sstarcat_consensus_spectra_tpm.txt' % self.prefix), sep='\t')
+            spectra_tpm_consensus.loc[filtsingle_index, :].to_csv(os.path.join(self.output_dir,
+                                    '%sstarcat_consensus_spectra_tpm.filtered.txt' % self.prefix), sep='\t')
+
+        return(spectra_tpm_consensus)
+
 
     def correlate_geps(self):
         """

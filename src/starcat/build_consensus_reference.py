@@ -310,7 +310,8 @@ class BuildConsensusReference():
         for i in range(0, len(self.spectra_tpm_all)):
             for j in range(i, len(self.spectra_tpm_all)):
                 # Renormalize each pair of cNMF results using intersecting genes
-                overlap_all = list(set(self.spectra_tpm_all[i].columns).intersection(self.spectra_tpm_all[j].columns))
+                # sorted, so the sums below (and so the correlations) do not depend on set iteration order
+                overlap_all = sorted(set(self.spectra_tpm_all[i].columns).intersection(self.spectra_tpm_all[j].columns))
 
                 renorm1 = self.spectra_tpm_all[i][overlap_all].div(
                             self.spectra_tpm_all[i][overlap_all].sum(axis=1), axis=0)*1e6
@@ -333,6 +334,11 @@ class BuildConsensusReference():
         """
         Cluster programs according to the pairwise correlation matrix.
 
+        GEP pairs connected in both directions are visited once each, from the most to the least correlated
+        (ties broken by GEP name), and clusters are numbered in the order they form; when two clusters merge
+        the lower number is kept. The clustering and its numbering are therefore fully determined by the
+        inputs. The numbering does depend on the order of cnmf_paths, which sets the order of the GEPs.
+
         Parameters
         ----------    
 
@@ -353,10 +359,14 @@ class BuildConsensusReference():
 
             self.A.loc[gep, top_geps.index] = top_geps
 
-        # Order by correlation
-        ord_A = pd.DataFrame(self.A.unstack().sort_values(ascending = False)).reset_index()
-        ord_A.columns = ['gep1', 'gep2', 'corr']
-        ord_A = ord_A[ord_A['corr']!=0]
+        # One entry per unordered pair of GEPs with an edge in both directions, ordered by correlation.
+        # Each such pair used to be listed twice, as (a, b) and (b, a) with identical correlation, and the
+        # order of those ties (left to an unstable sort) decided which cluster number survived a merge.
+        A_vals = self.A.values
+        ind1, ind2 = np.where(np.triu((A_vals > 0) & (A_vals.T > 0), k=1))
+        ord_A = pd.DataFrame({'gep1': self.A.index[ind1], 'gep2': self.A.index[ind2], 'corr': A_vals[ind1, ind2]})
+        ord_A = ord_A.sort_values(['corr', 'gep1', 'gep2'], ascending=[False, True, True],
+                                  kind='stable').reset_index(drop=True)
 
         # Cluster GEPs if edge exists between them 
         gep_clusters = pd.DataFrame({'gep' : self.A.index, 'cluster' : 0})
@@ -366,8 +376,7 @@ class BuildConsensusReference():
             gep = ord_A.loc[i, 'gep1']
             gep_alt = ord_A.loc[i, 'gep2']
 
-            if self.A.loc[gep_alt, gep]>0:
-                gep_clusters = self.pairwise_cluster_geps(gep, gep_alt, gep_clusters)
+            gep_clusters = self.pairwise_cluster_geps(gep, gep_alt, gep_clusters)
 
         # Renumber clusters and assign singletons to unique clusters
         clus_dict = {clus_num:sorted(gep_clusters.loc[gep_clusters['cluster']==clus_num, 'gep'].values) 
@@ -438,7 +447,8 @@ class BuildConsensusReference():
             alt_gep_ds = [x.split(':', 1)[0] for x in alt_gep_list]
 
             if ((pct_adj > self.pct_thresh) and (len(set(gep_ds).intersection(alt_gep_ds)) == 0)):
-                gep_clusters.loc[alt_gep_list, 'cluster'] = gep_num
+                # keep the lower cluster number, so the result does not depend on the order of the pair
+                gep_clusters.loc[gep_list + alt_gep_list, 'cluster'] = min(gep_num, alt_gep_num)
 
         # Add unclustered GEP to a cluster if enough shared edges and no dataset overlap                
         elif len(clustered)==1:
